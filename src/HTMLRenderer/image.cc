@@ -14,7 +14,7 @@ const int *int_p_NULL = nullptr;
 #include <boost/gil/extension/io/png_dynamic_io.hpp>
 
 #include "HTMLRenderer.h"
-#include "namespace.h"
+#include "util/namespace.h"
 
 using namespace boost::gil;
 
@@ -62,3 +62,21 @@ void HTMLRenderer::drawImage(GfxState * state, Object * ref, Stream * str, int w
 
     ++ image_count;
 }
+
+void HTMLRenderer::drawSoftMaskedImage(GfxState *state, Object *ref, Stream *str,
+                   int width, int height,
+                   GfxImageColorMap *colorMap,
+                   GBool interpolate,
+                   Stream *maskStr,
+                   int maskWidth, int maskHeight,
+                   GfxImageColorMap *maskColorMap,
+                   GBool maskInterpolate)
+    {
+        tracer.draw_image(state);
+
+        return OutputDev::drawSoftMaskedImage(state,ref,str, // TODO really required?
+                width,height,colorMap,interpolate,
+                maskStr, maskWidth, maskHeight, maskColorMap, maskInterpolate);
+    }
+
+} // namespace pdf2htmlEX
