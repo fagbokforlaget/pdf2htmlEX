@@ -79,6 +79,7 @@ HTMLRenderer::HTMLRenderer(const Param & param)
     all_manager.height      .set_eps(EPS);
     all_manager.width       .set_eps(EPS);
     all_manager.bottom      .set_eps(EPS);
+    all_manager.top         .set_eps(EPS);
 
     tracer.on_char_drawn =
             [this](double * box) { covered_text_detector.add_char_bbox(box); };
@@ -507,6 +508,7 @@ void HTMLRenderer::dump_css (void)
     all_manager.fill_color      .dump_css(f_css.fs);
     all_manager.font_size       .dump_css(f_css.fs);
     all_manager.bottom          .dump_css(f_css.fs);
+    all_manager.top             .dump_css(f_css.fs);
     all_manager.height          .dump_css(f_css.fs);
     all_manager.width           .dump_css(f_css.fs);
     all_manager.left            .dump_css(f_css.fs);
@@ -526,6 +528,7 @@ void HTMLRenderer::dump_css (void)
         all_manager.fill_color      .dump_print_css(f_css.fs, ps);
         all_manager.font_size       .dump_print_css(f_css.fs, ps);
         all_manager.bottom          .dump_print_css(f_css.fs, ps);
+        all_manager.top             .dump_print_css(f_css.fs, ps);
         all_manager.height          .dump_print_css(f_css.fs, ps);
         all_manager.width           .dump_print_css(f_css.fs, ps);
         all_manager.left            .dump_print_css(f_css.fs, ps);

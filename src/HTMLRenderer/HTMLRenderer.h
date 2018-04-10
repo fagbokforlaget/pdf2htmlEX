@@ -324,6 +324,7 @@ protected:
 
     // render background image
     friend class SplashBackgroundRenderer; // ugly!
+    friend class CairoImagesRenderer; // ugly!
 #if ENABLE_SVG
     friend class CairoBackgroundRenderer; // ugly!
 #endif

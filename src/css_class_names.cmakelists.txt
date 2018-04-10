@@ -32,6 +32,7 @@ set(CSS_LEFT_CN             "x") # X
 set(CSS_HEIGHT_CN           "h") # Height
 set(CSS_WIDTH_CN            "w") # Width
 set(CSS_BOTTTOM_CN          "y") # Y
+set(CSS_TOP_CN              "ty") # TY
 set(CSS_CSS_DRAW_CN         "d") # Draw
 set(CSS_LINK_CN             "l") # Link
 set(CSS_INPUT_TEXT_CN       "it") # Text input

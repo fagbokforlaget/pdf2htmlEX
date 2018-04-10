@@ -276,6 +276,15 @@ public:
     void dump_print_value(std::ostream & out, double value, double scale) { out << "bottom:" << round(value*scale) << "pt;"; }
 };
 
+class TopManager : public StateManager<double, TopManager>
+{
+public:
+    static const char * get_css_class_name (void) { return CSS::TOP_CN; }
+    double default_value(void) { return 0; }
+    void dump_value(std::ostream & out, double value) { out << "top:" << round(value) << "px;"; }
+    void dump_print_value(std::ostream & out, double value, double scale) { out << "top:" << round(value*scale) << "pt;"; }
+};
+
 class HeightManager : public StateManager<double, HeightManager>
 {
 public:
@@ -419,6 +428,7 @@ struct AllStateManager
     FillColorManager             fill_color;
     FontSizeManager               font_size;
     BottomManager                    bottom;
+    TopManager                          top;
     HeightManager                    height;
     WidthManager                      width;
     LeftManager                        left;

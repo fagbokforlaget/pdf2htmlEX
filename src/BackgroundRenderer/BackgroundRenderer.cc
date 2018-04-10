@@ -11,6 +11,7 @@
 #include "Param.h"
 
 #include "BackgroundRenderer.h"
+#include "CairoImagesRenderer.h"
 #include "SplashBackgroundRenderer.h"
 #if ENABLE_SVG
 #include "CairoBackgroundRenderer.h"
@@ -21,7 +22,10 @@ namespace pdf2htmlEX {
 std::unique_ptr<BackgroundRenderer> BackgroundRenderer::getBackgroundRenderer(const std::string & format, HTMLRenderer * html_renderer, const Param & param)
 {
 #ifdef ENABLE_LIBPNG
-    if(format == "png")
+    if(param.images) 
+    {
+        return std::unique_ptr<BackgroundRenderer>(new CairoImagesRenderer(html_renderer, param));
+    } else if(format == "png")
     {
         return std::unique_ptr<BackgroundRenderer>(new SplashBackgroundRenderer(format, html_renderer, param));
     }

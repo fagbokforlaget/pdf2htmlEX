@@ -431,7 +431,7 @@ public:
   virtual void fill(GfxState *state) { }
   virtual void eoFill(GfxState *state) { }
   virtual void clipToStrokePath(GfxState *state) { }
-  virtual GBool tilingPatternFill(GfxState *state, Gfx *gfx, Catalog *cat, Object *str,
+ virtual GBool tilingPatternFill(GfxState *state, Gfx *gfx, Catalog *cat, Object *str,
 				  double *pmat, int paintType, int tilingType, Dict *resDict,
 				  double *mat, double *bbox,
 				  int x0, int y0, int x1, int y1,
@@ -442,7 +442,7 @@ public:
   virtual GBool radialShadedFill(GfxState *state,
 				 GfxRadialShading *shading,
 				 double sMin, double sMax) { return gTrue; }
-
+  
   //----- path clipping
   virtual void clip(GfxState *state) { }
   virtual void eoClip(GfxState *state) { }
@@ -485,6 +485,7 @@ public:
   virtual void setSoftMask(GfxState * /*state*/, double * /*bbox*/, GBool /*alpha*/,
 			   Function * /*transferFunc*/, GfxColor * /*backdropColor*/) {}
   virtual void clearSoftMask(GfxState * /*state*/) {}
+  virtual void clearImages();
 
   //----- Image list
   // By default images are not rendred

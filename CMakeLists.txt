@@ -130,6 +130,8 @@ set(PDF2HTMLEX_SRC ${PDF2HTMLEX_SRC}
     src/BackgroundRenderer/SplashBackgroundRenderer.cc
     src/BackgroundRenderer/CairoBackgroundRenderer.h
     src/BackgroundRenderer/CairoBackgroundRenderer.cc
+    src/BackgroundRenderer/CairoImagesRenderer.h
+    src/BackgroundRenderer/CairoImagesRenderer.cc
     src/util/const.h
     src/util/const.cc
     src/util/css_const.h
