@@ -116,19 +116,10 @@ bool CairoBackgroundRenderer::render_page(PDFDoc * doc, int pageno)
     drawn_char_count = 0;
     double page_width;
     double page_height;
-    if(param.use_cropbox)
-    {
-        page_width = doc->getPageCropWidth(pageno);
-        page_height = doc->getPageCropHeight(pageno);
-    }
-    else
-    {
-        page_width = doc->getPageMediaWidth(pageno);
-        page_height = doc->getPageMediaHeight(pageno);
-    }
-
-    if (doc->getPageRotate(pageno) == 90 || doc->getPageRotate(pageno) == 270)
-        std::swap(page_height, page_width);
+    
+    page_width = html_renderer->html_text_page.get_width();
+    page_height = html_renderer->html_text_page.get_height();
+    
 
     string fn = (char*)html_renderer->str_fmt("%s/bg%x.svg", (param.embed_image ? param.tmp_dir : param.dest_dir).c_str(), pageno);
     if(param.embed_image)
@@ -144,7 +135,7 @@ bool CairoBackgroundRenderer::render_page(PDFDoc * doc, int pageno)
     bitmaps_in_current_page.clear();
 
     bool process_annotation = param.process_annotation;
-    doc->displayPage(this, pageno, param.h_dpi, param.v_dpi,
+    doc->displayPage(this, pageno, html_renderer->text_zoom_factor() * param.h_dpi, html_renderer->text_zoom_factor() * param.v_dpi,
             0, 
             (!(param.use_cropbox)),
             false, 
