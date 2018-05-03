@@ -1037,7 +1037,6 @@ void HTMLRenderer::export_remote_font(const FontInfo & info, const string & form
              << "line-height:" << round(info.ascent - info.descent) << ";"
              << "font-style:normal;"
              << "font-weight:normal;"
-             << "visibility:visible;"
              << "}" 
              << endl;
 }
@@ -1080,8 +1079,6 @@ void HTMLRenderer::export_local_font(const FontInfo & info, GfxFont * font, cons
         f_css.fs << "font-style:normal;";
 
     f_css.fs << "line-height:" << round(info.ascent - info.descent) << ";";
-
-    f_css.fs << "visibility:visible;";
 
     f_css.fs << "}" << endl;
 }
