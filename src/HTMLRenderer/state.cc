@@ -506,8 +506,12 @@ void HTMLRenderer::prepare_text_line(GfxState * state)
     {
         // update position such that they will be recorded by text_line_buf
         double rise_x, rise_y;
+        double x2, y2;
         state->textTransformDelta(0, state->getRise(), &rise_x, &rise_y);
-        state->transform(state->getCurX() + rise_x, state->getCurY() + rise_y, &cur_line_state.x, &cur_line_state.y);
+        state->transform(state->getCurX() + rise_x, state->getCurY() + rise_y, &x2, &y2);
+        
+        cur_line_state.x = x2;
+        cur_line_state.y = state->getPageHeight() - y2;
 
         if (param.correct_text_visibility)
             cur_line_state.first_char_index = get_char_count();

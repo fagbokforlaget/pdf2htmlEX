@@ -2,6 +2,10 @@ CMakeCache.txt
 CMakeFiles/*
 cmake_install.cmake
 CTestTestfile.cmake
+CMakeScripts/
+Debug/
+pdf2htmlEX.build/
+pdf2htmlEX.xcodeproj
 gmon.out
 install_manifest.txt
 Makefile

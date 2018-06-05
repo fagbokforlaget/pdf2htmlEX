@@ -159,7 +159,7 @@ void HTMLTextLine::dump_text(ostream & out)
             << " " << CSS::TRANSFORM_MATRIX_CN << all_manager.transform_matrix.install(line_state.transform_matrix)
             << " " << CSS::LEFT_CN             << all_manager.left.install(line_state.x - clip_x1)
             << " " << CSS::HEIGHT_CN           << all_manager.height.install(ascent)
-            << " " << CSS::BOTTOM_CN           << all_manager.bottom.install(line_state.y - clip_y1)
+            << " " << CSS::TOP_CN           << all_manager.top.install(line_state.y - clip_y1 - ascent)
             ;
         // it will be closed by the first state
     }
