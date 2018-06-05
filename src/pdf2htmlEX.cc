@@ -151,6 +151,7 @@ void parse_options (int argc, char **argv)
         .add("embed-outline", &param.embed_outline, 1, "embed outlines into output")
         .add("split-pages", &param.split_pages, 0, "split pages into separate files")
         .add("dest-dir", &param.dest_dir, ".", "specify destination directory")
+        .add("thumbs-dir", &param.thumbs_dir, "/thumbs", "specify destination directory")
         .add("css-filename", &param.css_filename, "", "filename of the generated css file")
         .add("page-filename", &param.page_filename, "", "filename template for split pages ")
         .add("outline-filename", &param.outline_filename, "", "filename of the generated outline file")
@@ -380,6 +381,7 @@ int main(int argc, char **argv)
     try
     {
         create_directories(param.dest_dir);
+        create_directories(param.dest_dir + param.thumbs_dir);
     }
     catch (const string & s)
     {

@@ -32,6 +32,7 @@ struct Param
     int embed_outline;
     int split_pages;
     std::string dest_dir;
+    std::string thumbs_dir;
     std::string css_filename;
     std::string page_filename;
     std::string outline_filename;

@@ -325,11 +325,12 @@ protected:
     // render background image
     friend class SplashBackgroundRenderer; // ugly!
     friend class CairoImagesRenderer; // ugly!
+    friend class ThumbRenderer; // ugly!
 #if ENABLE_SVG
     friend class CairoBackgroundRenderer; // ugly!
 #endif
 
-    std::unique_ptr<BackgroundRenderer> bg_renderer, fallback_bg_renderer;
+    std::unique_ptr<BackgroundRenderer> bg_renderer, fallback_bg_renderer, thumbs_render;
 
     struct {
         std::ofstream fs;

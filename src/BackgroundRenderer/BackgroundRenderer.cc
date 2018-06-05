@@ -12,6 +12,7 @@
 
 #include "BackgroundRenderer.h"
 #include "CairoImagesRenderer.h"
+#include "ThumbRender.h"
 #include "SplashBackgroundRenderer.h"
 #if ENABLE_SVG
 #include "CairoBackgroundRenderer.h"
@@ -51,6 +52,11 @@ std::unique_ptr<BackgroundRenderer> BackgroundRenderer::getFallbackBackgroundRen
     if (param.bg_format == "svg" && param.svg_node_count_limit >= 0)
         return std::unique_ptr<BackgroundRenderer>(new SplashBackgroundRenderer("", html_renderer, param));
     return nullptr;
+}
+
+std::unique_ptr<BackgroundRenderer> BackgroundRenderer::getThumbRender(HTMLRenderer * html_renderer, const Param & param)
+{
+    return std::unique_ptr<BackgroundRenderer>(new ThumbRenderer("", html_renderer, param));
 }
 
 void BackgroundRenderer::proof_begin_text_object(GfxState *state, OutputDev * dev)

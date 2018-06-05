@@ -28,6 +28,7 @@ public:
     // Return a fallback bg renderer according to param.bg_format.
     // Currently only svg bg format might need a bitmap fallback.
     static std::unique_ptr<BackgroundRenderer> getFallbackBackgroundRenderer(HTMLRenderer * html_renderer, const Param & param);
+    static std::unique_ptr<BackgroundRenderer> getThumbRender(HTMLRenderer * html_renderer, const Param & param);
 
     BackgroundRenderer() {}
     virtual ~BackgroundRenderer() {}

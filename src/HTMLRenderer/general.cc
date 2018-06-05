@@ -115,6 +115,10 @@ void HTMLRenderer::process(PDFDoc *doc)
         fallback_bg_renderer = BackgroundRenderer::getFallbackBackgroundRenderer(this, param);
         if (fallback_bg_renderer)
             fallback_bg_renderer->init(doc);
+
+        thumbs_render = BackgroundRenderer::getThumbRender(this, param);
+        if (thumbs_render)
+            thumbs_render->init(doc);
     }
 
     int page_count = (param.last_page - param.first_page + 1);
@@ -167,6 +171,7 @@ void HTMLRenderer::process(PDFDoc *doc)
 
     bg_renderer = nullptr;
     fallback_bg_renderer = nullptr;
+    thumbs_render = nullptr;
 
     cerr << endl;
 }
@@ -233,6 +238,11 @@ void HTMLRenderer::endPage() {
             if (fallback_bg_renderer->render_page(cur_doc, pageNum))
                 fallback_bg_renderer->embed_image(pageNum);
         }
+    }
+
+    if (thumbs_render->render_page(cur_doc, pageNum))
+    {
+        thumbs_render->embed_image(pageNum);
     }
 
     // dump all text
