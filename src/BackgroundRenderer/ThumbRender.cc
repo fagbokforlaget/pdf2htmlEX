@@ -4,47 +4,45 @@
  * Copyright (C) 2012,2013 Lu Wang <coolwanglu@gmail.com>
  */
 
+#include <string>
 #include <fstream>
-#include <vector>
-#include <memory>
+#include "goo/PNGWriter.h"
 
-#include <poppler-config.h>
-#include <PDFDoc.h>
-#include <goo/PNGWriter.h>
-#include <goo/JpegWriter.h>
+#include "pdf2htmlEX-config.h"
 
 #include "Base64Stream.h"
-#include "util/const.h"
+#ifdef ENABLE_LIBPNG
+#include <png.h>
+#endif
+
 
 #include "ThumbRender.h"
+#include "SplashBackgroundRenderer.h"
 
 namespace pdf2htmlEX {
 
 using std::string;
 using std::ifstream;
+using std::ofstream;
 using std::vector;
-using std::unique_ptr;
+using std::unordered_map;
 
-const SplashColor ThumbRenderer::white = {255,255,255};
-
-ThumbRenderer::ThumbRenderer(const string & imgFormat, HTMLRenderer * html_renderer, const Param & param)
-    : SplashOutputDev(splashModeRGB8, 4, gFalse, (SplashColorPtr)(&white))
+ThumbRenderer::ThumbRenderer(HTMLRenderer * html_renderer, const Param & param)
+    : CairoOutputDev()
     , html_renderer(html_renderer)
     , param(param)
-    , format(imgFormat)
-{
-    
-}
+    , surface(nullptr)
+{ }
 
-/*
- * SplashOutputDev::startPage would paint the whole page with the background color
- * And thus have modified region set to the whole page area
- * We do not want that.
- */
-void ThumbRenderer::startPage(int pageNum, GfxState *state, XRef *xrefA)
+ThumbRenderer::~ThumbRenderer()
 {
-    SplashOutputDev::startPage(pageNum, state, xrefA);
-    clearModRegion();
+    for(auto const& p : bitmaps_ref_count)
+    {
+        if (p.second == 0)
+        {
+            html_renderer->tmp_files.add(this->build_bitmap_path(p.first));
+        }
+    }
 }
 
 void ThumbRenderer::init(PDFDoc * doc)
@@ -65,8 +63,12 @@ bool ThumbRenderer::render_page(PDFDoc * doc, int pageno)
     
     page_width = html_renderer->html_text_page.get_width() * param.h_dpi / DEFAULT_DPI;
     page_height = html_renderer->html_text_page.get_height() * param.v_dpi / DEFAULT_DPI;
-    h_res = (html_renderer->text_zoom_factor() * param.h_dpi * 200) / page_width;
-    v_res = (html_renderer->text_zoom_factor() * param.v_dpi * 150) / page_height;
+    h_res = (html_renderer->text_zoom_factor() * param.h_dpi * 400) / param.fit_width;
+    v_res = (html_renderer->text_zoom_factor() * param.v_dpi * 300) / param.fit_height;
+
+    surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, 400, 300);
+    cairo_t * cr = cairo_create(surface);
+    setCairo(cr);
     
     bool process_annotation = param.process_annotation;
     doc->displayPage(this, pageno, h_res, v_res,
@@ -79,70 +81,132 @@ bool ThumbRenderer::render_page(PDFDoc * doc, int pageno)
 
 void ThumbRenderer::embed_image(int pageno)
 {
-    // xmin->xmax is top->bottom
-    int xmin, xmax, ymin, ymax;
-    getModRegion(&xmin, &ymin, &xmax, &ymax);
+  auto fn = html_renderer->str_fmt("%s/thumbs/slide%d.png", param.dest_dir.c_str(), pageno);
 
-    // dump the background image only when it is not empty
-    if((xmin <= xmax) && (ymin <= ymax))
-    {
-        {
-            auto fn = html_renderer->str_fmt("%s/thumbs/slide%d.png", param.dest_dir.c_str(), pageno);
-            
+  FILE *file;
+  int height, width, stride;
+  unsigned char *data;
+  ImgWriter *writer = 0;
+  
+  writer = new PNGWriter(PNGWriter::RGB);
 
-            dump_image((char*)fn, xmin, ymin, xmax, ymax);
-        }
+  if (!writer)
+    return;
+
+  file = fopen((char*)fn, "wb");
+
+  if (!file) {
+    fprintf(stderr, "Error opening output file \n");
+    exit(2);
+  }
+
+  height = cairo_image_surface_get_height(surface);
+  width = cairo_image_surface_get_width(surface);
+  stride = cairo_image_surface_get_stride(surface);
+  cairo_surface_flush(surface);
+  data = cairo_image_surface_get_data(surface);
+
+  if (!writer->init(file, width, height, 144, 144)) {
+    fprintf(stderr, "Error writing \n");
+    exit(2);
+  }
+
+  unsigned char *row = (unsigned char *) gmallocn(width, 4);
+
+  for (int y = 0; y < height; y++ ) {
+    uint32_t *pixel = (uint32_t *) (data + y*stride);
+    unsigned char *rowp = row;
+    for (int x = 0; x < width; x++, pixel++) {
+        *rowp++ = (*pixel & 0x00ff0000) >> 16;
+        *rowp++ = (*pixel & 0x0000ff00) >>  8;
+        *rowp++ = (*pixel & 0x000000ff) >>  0;
     }
+    writer->writeRow(&row);
+  }
+  gfree(row);
+  writer->close();
+  delete writer;
+  if (file == stdout) fflush(file);
+  else fclose(file);
 }
 
-// There might be mem leak when exception is thrown !
-void ThumbRenderer::dump_image(const char * filename, int x1, int y1, int x2, int y2)
+string ThumbRenderer::build_bitmap_path(int id)
 {
-    int width = x2 - x1 + 1;
-    int height = y2 - y1 + 1;
-    if((width <= 0) || (height <= 0))
-        throw "Bad metric for background image";
-
-    FILE * f = fopen(filename, "wb");
-    if(!f)
-        throw string("Cannot open file for background image " ) + filename;
-
-    // use unique_ptr to auto delete the object upon exception
-    unique_ptr<ImgWriter> writer;
-
-    
-    writer = unique_ptr<ImgWriter>(new PNGWriter);
-   
-
-    if(!writer->init(f, width, height, param.h_dpi, param.v_dpi))
-        throw "Cannot initialize image writer";
-        
-    auto * bitmap = getBitmap();
-    assert(bitmap->getMode() == splashModeRGB8);
-
-    SplashColorPtr data = bitmap->getDataPtr();
-    int row_size = bitmap->getRowSize();
-
-    vector<unsigned char*> pointers;
-    pointers.reserve(height);
-    SplashColorPtr p = data + y1 * row_size + x1 * 3;
-    for(int i = 0; i < height; ++i)
+    // "o" for "PDF Object"
+    return string(html_renderer->str_fmt("%s/o%d.jpg", param.dest_dir.c_str(), id));
+}
+// Override CairoOutputDev::setMimeData() and dump bitmaps in SVG to external files.
+void ThumbRenderer::setMimeData(Stream *str, Object *ref, cairo_surface_t *image)
+{
+    if (param.svg_embed_bitmap)
     {
-        pointers.push_back(p);
-        p += row_size;
-    }
-    
-    if(!writer->writePointers(pointers.data(), height)) 
-    {
-        throw "Cannot write background image";
+        CairoOutputDev::setMimeData(str, ref, image);
+        return;
     }
 
-    if(!writer->close())
-    {
-        throw "Cannot finish background image";
-    }
+    // TODO dump bitmaps in other formats.
+    if (str->getKind() != strDCT)
+        return;
 
-    fclose(f);
+    // TODO inline image?
+    if (ref == nullptr || !ref->isRef())
+        return;
+
+    // We only dump rgb or gray jpeg without /Decode array.
+    //
+    // Although jpeg support CMYK, PDF readers do color conversion incompatibly with most other
+    // programs (including browsers): other programs invert CMYK color if 'Adobe' marker (app14) presents
+    // in a jpeg file; while PDF readers don't, they solely rely on /Decode array to invert color.
+    // It's a bit complicated to decide whether a CMYK jpeg is safe to dump, so we don't dump at all.
+    // See also:
+    //   JPEG file embedded in PDF (CMYK) https://forums.adobe.com/thread/975777
+    //   http://stackoverflow.com/questions/3123574/how-to-convert-from-cmyk-to-rgb-in-java-correctly
+    //
+    // In PDF, jpeg stream objects can also specify other color spaces like DeviceN and Separation,
+    // It is also not safe to dump them directly.
+    Object obj;
+    str->getDict()->lookup("ColorSpace", &obj);
+    if (!obj.isName() || (strcmp(obj.getName(), "DeviceRGB") && strcmp(obj.getName(), "DeviceGray")) )
+    {
+        obj.free();
+        return;
+    }
+    obj.free();
+    str->getDict()->lookup("Decode", &obj);
+    if (obj.isArray())
+    {
+        obj.free();
+        return;
+    }
+    obj.free();
+
+    int imgId = ref->getRef().num;
+    auto uri = strdup((char*) html_renderer->str_fmt("o%d.jpg", imgId));
+    auto st = cairo_surface_set_mime_data(image, CAIRO_MIME_TYPE_URI,
+        (unsigned char*) uri, strlen(uri), free, uri);
+    if (st)
+    {
+        free(uri);
+        return;
+    }
+    bitmaps_in_current_page.push_back(imgId);
+
+    if(bitmaps_ref_count.find(imgId) != bitmaps_ref_count.end())
+        return;
+
+    bitmaps_ref_count[imgId] = 0;
+
+    char *strBuffer;
+    int len;
+    if (getStreamData(str->getNextStream(), &strBuffer, &len))
+    {
+        ofstream imgfile(build_bitmap_path(imgId), ofstream::binary);
+        imgfile.write(strBuffer, len);
+        free(strBuffer);
+    }
 }
 
 } // namespace pdf2htmlEX
+
+
+

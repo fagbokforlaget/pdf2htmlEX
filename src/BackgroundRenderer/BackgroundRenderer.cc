@@ -56,7 +56,7 @@ std::unique_ptr<BackgroundRenderer> BackgroundRenderer::getFallbackBackgroundRen
 
 std::unique_ptr<BackgroundRenderer> BackgroundRenderer::getThumbRender(HTMLRenderer * html_renderer, const Param & param)
 {
-    return std::unique_ptr<BackgroundRenderer>(new ThumbRenderer("", html_renderer, param));
+    return std::unique_ptr<BackgroundRenderer>(new ThumbRenderer(html_renderer, param));
 }
 
 void BackgroundRenderer::proof_begin_text_object(GfxState *state, OutputDev * dev)

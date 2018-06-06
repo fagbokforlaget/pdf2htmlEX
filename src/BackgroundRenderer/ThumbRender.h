@@ -1,6 +1,6 @@
 /*
- * Splash Background renderer
- * Render all those things not supported as Image, with Splash
+ * ThumbRender renderer
+ * Render all those things not supported as Image, with Cairo
  *
  * Copyright (C) 2012,2013 Lu Wang <coolwanglu@gmail.com>
  */
@@ -9,10 +9,12 @@
 #ifndef THUMB_RENDER_H__
 #define THUMB_RENDER_H__
 
+#include <CairoOutputDev.h>
+#include <cairo.h>
+#include <cairo-svg.h>
+#include <unordered_map>
+#include <vector>
 #include <string>
-
-#include <splash/SplashBitmap.h>
-#include <SplashOutputDev.h>
 
 #include "pdf2htmlEX-config.h"
 
@@ -22,28 +24,38 @@
 namespace pdf2htmlEX {
 
 // Based on BackgroundRenderer from poppler
-class ThumbRenderer : public BackgroundRenderer, SplashOutputDev 
+class ThumbRenderer : public BackgroundRenderer, CairoOutputDev 
 {
 public:
-  static const SplashColor white;
-  //format: "png" or "jpg", or "" for a default format
-  ThumbRenderer(const std::string & format, HTMLRenderer * html_renderer, const Param & param);
+  ThumbRenderer(HTMLRenderer * html_renderer, const Param & param);
 
-  virtual ~ThumbRenderer() { }
+  virtual ~ThumbRenderer();
 
   virtual void init(PDFDoc * doc);
   virtual bool render_page(PDFDoc * doc, int pageno);
   virtual void embed_image(int pageno);
-  virtual void startPage(int pageNum, GfxState *state, XRef *xrefA);
-
+  virtual GBool interpretType3Chars() { return !param.process_type3; }
 
 protected:
-  void dump_image(const char * filename, int x1, int y1, int x2, int y2);
+  virtual void setMimeData(Stream *str, Object *ref, cairo_surface_t *image);
+
+protected:
   HTMLRenderer * html_renderer;
   const Param & param;
-  std::string format;
+  cairo_surface_t * surface;
+
+private:
+  // convert bitmap stream id to bitmap file name. No pageno prefix,
+  // because a bitmap may be shared by multiple pages.
+  std::string build_bitmap_path(int id);
+  // map<id_of_bitmap_stream, usage_count_in_all_svgs>
+  // note: if a svg bg fallbacks to bitmap bg, its bitmaps are not taken into account.
+  std::unordered_map<int, int> bitmaps_ref_count;
+  // id of bitmaps' stream used by current page
+  std::vector<int> bitmaps_in_current_page;
+  int drawn_char_count;
 };
 
-} // namespace pdf2htmlEX
+}
 
-#endif // THUMB_RENDER_H__
+#endif //THUMB_RENDER_H__
