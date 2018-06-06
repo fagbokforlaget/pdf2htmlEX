@@ -88,7 +88,8 @@ void ThumbRenderer::embed_image(int pageno)
   unsigned char *data;
   ImgWriter *writer = 0;
   
-  writer = new PNGWriter(PNGWriter::RGB);
+  writer = new PNGWriter(PNGWriter::RGBA);
+  static_cast<PNGWriter*>(writer)->setSRGBProfile();
 
   if (!writer)
     return;
@@ -117,9 +118,19 @@ void ThumbRenderer::embed_image(int pageno)
     uint32_t *pixel = (uint32_t *) (data + y*stride);
     unsigned char *rowp = row;
     for (int x = 0; x < width; x++, pixel++) {
-        *rowp++ = (*pixel & 0x00ff0000) >> 16;
-        *rowp++ = (*pixel & 0x0000ff00) >>  8;
-        *rowp++ = (*pixel & 0x000000ff) >>  0;
+	// unpremultiply into RGBA format
+          uint8_t a;
+          a = (*pixel & 0xff000000) >> 24;
+          if (a == 0) {
+            *rowp++ = 0;
+            *rowp++ = 0;
+            *rowp++ = 0;
+          } else {
+            *rowp++ = (((*pixel & 0xff0000) >> 16) * 255 + a / 2) / a;
+            *rowp++ = (((*pixel & 0x00ff00) >>  8) * 255 + a / 2) / a;
+            *rowp++ = (((*pixel & 0x0000ff) >>  0) * 255 + a / 2) / a;
+          }
+          *rowp++ = a;
     }
     writer->writeRow(&row);
   }
