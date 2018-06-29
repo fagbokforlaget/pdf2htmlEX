@@ -108,7 +108,7 @@ void CairoBackgroundRenderer::init(PDFDoc * doc)
 }
 
 static GBool annot_cb(Annot *, void * pflag) {
-    return (*((bool*)pflag)) ? gTrue : gFalse;
+    return (*((bool*)pflag)) ? gFalse : gTrue;
 };
 
 bool CairoBackgroundRenderer::render_page(PDFDoc * doc, int pageno)
@@ -230,7 +230,7 @@ void CairoBackgroundRenderer::setMimeData(Stream *str, Object *ref, cairo_surfac
 {
     if (param.svg_embed_bitmap)
     {
-        CairoOutputDev::setMimeData(str, ref, image);
+       CairoOutputDev::setMimeData(str, ref, image);
         return;
     }
 
