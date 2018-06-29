@@ -51,7 +51,7 @@ void ThumbRenderer::init(PDFDoc * doc)
 }
 
 static GBool annot_cb(Annot *, void * pflag) {
-    return (*((bool*)pflag)) ? gTrue : gFalse;
+    return (*((bool*)pflag)) ? gFalse : gTrue;
 };
 
 bool ThumbRenderer::render_page(PDFDoc * doc, int pageno)
@@ -151,7 +151,7 @@ void ThumbRenderer::setMimeData(Stream *str, Object *ref, cairo_surface_t *image
 {
     if (param.svg_embed_bitmap)
     {
-        CairoOutputDev::setMimeData(str, ref, image);
+       CairoOutputDev::setMimeData(str, ref, image);
         return;
     }
 
