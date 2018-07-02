@@ -307,10 +307,10 @@ void HTMLTextLine::clear(void)
     text.clear();
 }
 
-void HTMLTextLine::clip(const HTMLClipState & clip_state)
+    void HTMLTextLine::clip(const HTMLClipState & clip_state, double height)
 {
     clip_x1 = clip_state.xmin;
-    clip_y1 = clip_state.ymin;
+    clip_y1 = height - clip_state.ymax;
 }
 
 void HTMLTextLine::prepare(void)
