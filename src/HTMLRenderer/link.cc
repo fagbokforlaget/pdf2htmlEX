@@ -192,29 +192,43 @@ void HTMLRenderer::processLink(AnnotLink * al)
     string dest_detail_str;
     string dest_str = get_linkaction_str(al->getAction(), dest_detail_str);
 
-    if(!dest_str.empty())
-    {
-        (*f_curpage) << "<a class=\"" << CSS::LINK_CN << "\" href=\"";
-        writeAttribute((*f_curpage), dest_str);
-        (*f_curpage) << "\"";
+    
+    (*f_curpage) << "<a href=\"";
+    writeAttribute((*f_curpage), dest_str);
+    (*f_curpage) << "\"";
 
-        if(!dest_detail_str.empty())
-            (*f_curpage) << " data-dest-detail='" << dest_detail_str << "'";
+    if(!dest_detail_str.empty())
+        (*f_curpage) << " data-dest-detail='" << dest_detail_str << "'";
 
-        (*f_curpage) << ">";
-    }
+//    (*f_curpage) << ">";
+    
+    
+    
+    
 
-    (*f_curpage) << "<div class=\"" << CSS::CSS_DRAW_CN << ' ' << CSS::TRANSFORM_MATRIX_CN
-        << all_manager.transform_matrix.install(default_ctm)
-        << "\" style=\"";
-
-    double x,y,w,h;
-    double x1, y1, x2, y2;
+    double x,y,w,h, pageH;
+    double x1, y1, x2, y2, posX, posY;
     al->getRect(&x1, &y1, &x2, &y2);
     x = min<double>(x1, x2);
     y = min<double>(y1, y2);
     w = max<double>(x1, x2) - x;
     h = max<double>(y1, y2) - y;
+    posX = x;
+    posY = y2;
+    pageH = html_text_page.get_height();
+    
+    tm_transform(default_ctm, posX, posY);
+    
+    posY = pageH - posY;
+    
+    (*f_curpage) << " class=\"" << CSS::LINK_CN << ' ' << CSS::CSS_DRAW_CN << ' ' << CSS::TRANSFORM_MATRIX_CN
+    << all_manager.transform_matrix.install(default_ctm)
+    << " " << CSS::LEFT_CN      << all_manager.left.install(round(posX))
+    << " " << CSS::TOP_CN    << all_manager.top.install(round(posY))
+    << " " << CSS::WIDTH_CN     << all_manager.width.install(round(w))
+    << " " << CSS::HEIGHT_CN    << all_manager.height.install(round(h))
+    << "\" style=\"";
+    
     
     double border_width = 0; 
     double border_top_bottom_width = 0;
@@ -287,23 +301,17 @@ void HTMLRenderer::processLink(AnnotLink * al)
         (*f_curpage) << "border-style:none;";
     }
 
-    tm_transform(default_ctm, x, y);
-
-    (*f_curpage) << "position:absolute;"
-        << "left:" << round(x) << "px;"
-        << "bottom:" << round(y) << "px;"
-        << "width:" << round(w) << "px;"
-        << "height:" << round(h) << "px;";
+    
 
     // fix for IE
     (*f_curpage) << "background-color:rgba(255,255,255,0.000001);";
 
-    (*f_curpage) << "\"></div>";
-
-    if(dest_str != "")
-    {
-        (*f_curpage) << "</a>";
-    }
+    (*f_curpage) << "\"></a>";
+//
+//    if(dest_str != "")
+//    {
+//        (*f_curpage) << "</a>";
+//    }
 }
 
 }// namespace pdf2htmlEX
