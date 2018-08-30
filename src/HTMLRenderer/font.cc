@@ -155,7 +155,7 @@ string HTMLRenderer::dump_embedded_font (GfxFont * font, FontInfo & info)
 
         obj.streamReset();
 
-        filepath = (char*)str_fmt("%s/%s%s", param.tmp_dir.c_str(), info.name->getCString(), suffix.c_str());
+        filepath = (char*)str_fmt("%s/%llx_%s%s", param.tmp_dir.c_str(), info.id, info.name->getCString(), suffix.c_str());
         tmp_files.add(filepath);
 
         ofstream outf(filepath, ofstream::binary);
@@ -796,9 +796,9 @@ void HTMLRenderer::embed_font(const string & filepath, GfxFont * font, FontInfo 
      * Ascent/Descent are not used in PDF, and the values in PDF may be wrong or inconsistent (there are 3 sets of them)
      * We need to reload in order to retrieve/fix accurate ascent/descent, some info won't be written to the font by fontforge until saved.
      */
-    string fn = (char*)str_fmt("%s/%s.%s",
+    string fn = (char*)str_fmt("%s/%llx_%s.%s",
         (param.embed_font ? param.tmp_dir : param.dest_dir).c_str(),
-        info.name->getCString(), param.font_format.c_str());
+        info.id, info.name->getCString(), param.font_format.c_str());
 
     if(param.embed_font)
         tmp_files.add(fn);
@@ -1011,11 +1011,11 @@ void HTMLRenderer::export_remote_font(const FontInfo & info, const string & form
     string mime_type = iter->second;
 
     f_css.fs << "@font-face{"
-             << "font-family: \"" << info.name->getCString() << "\";"
+             << "font-family: \"" << info.id << "_" << info.name->getCString() << "\";"
              << "src:url(";
 
     {
-        auto fn = str_fmt("%s.%s", info.name->getCString(), format.c_str());
+        auto fn = str_fmt("%llx_%s.%s", info.id, info.name->getCString(), format.c_str());
         if(param.embed_font)
         {
             auto path = param.tmp_dir + "/" + (char*)fn;
@@ -1034,7 +1034,7 @@ void HTMLRenderer::export_remote_font(const FontInfo & info, const string & form
              << "format(\"" << css_font_format << "\");"
              << "}" // end of @font-face
              << "." << CSS::FONT_FAMILY_CN << info.id << "{"
-             << "font-family: \"" << info.name->getCString() << "\";"
+             << "font-family: \"" << info.id << "_" << info.name->getCString() << "\";"
              << "line-height:" << round(info.ascent - info.descent) << ";"
              << "font-style:normal;"
              << "font-weight:normal;"
