@@ -1012,7 +1012,7 @@ void HTMLRenderer::export_remote_font(const FontInfo & info, const string & form
 
     f_css.fs << "@font-face{"
              << "font-family: \"" << info.id << "_" << info.name->getCString() << "\";"
-             << "src:url(";
+             << "src:url(\"";
 
     {
         auto fn = str_fmt("%llx_%s.%s", info.id, info.name->getCString(), format.c_str());
@@ -1030,7 +1030,7 @@ void HTMLRenderer::export_remote_font(const FontInfo & info, const string & form
         }
     }
 
-    f_css.fs << ")"
+    f_css.fs << "\")"
              << "format(\"" << css_font_format << "\");"
              << "}" // end of @font-face
              << "." << CSS::FONT_FAMILY_CN << info.id << "{"
