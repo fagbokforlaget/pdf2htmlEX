@@ -50,6 +50,8 @@ struct HTMLRenderer : OutputDev
     HTMLRenderer(const Param & param);
     virtual ~HTMLRenderer();
 
+    void process_page(PDFDoc *doc, int page_index, int page_number, int page_count);
+
     void process(PDFDoc * doc);
 
     ////////////////////////////////////////////////////

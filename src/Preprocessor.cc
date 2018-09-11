@@ -42,18 +42,35 @@ Preprocessor::~Preprocessor(void)
 
 void Preprocessor::process(PDFDoc * doc)
 {
-    int page_count = (param.last_page - param.first_page + 1);
-    for(int i = param.first_page; i <= param.last_page ; ++i) 
-    {
-        cerr << "Preprocessing: " << (i-param.first_page) << "/" << page_count << '\r' << flush;
+    int page_count = 0;
+    if(param.pages_array.size() > 0) {
+        page_count = param.pages_array.size();
+        for(int i = 0; i < page_count ; i++) 
+        {
+            cerr << "Preprocessing: " << i << "/" << page_count << '\r' << flush;
 
-        doc->displayPage(this, i, DEFAULT_DPI, DEFAULT_DPI,
-                0, 
-                (!(param.use_cropbox)),
-                true,  // crop
-                false, // printing
-                nullptr, nullptr, nullptr, nullptr);
+            doc->displayPage(this, param.pages_array[i], DEFAULT_DPI, DEFAULT_DPI,
+                    0, 
+                    (!(param.use_cropbox)),
+                    true,  // crop
+                    false, // printing
+                    nullptr, nullptr, nullptr, nullptr);
+        }
+    } else {
+        page_count = (param.last_page - param.first_page + 1);
+        for(int i = param.first_page; i <= param.last_page ; ++i) 
+        {
+            cerr << "Preprocessing: " << (i-param.first_page) << "/" << page_count << '\r' << flush;
+
+            doc->displayPage(this, i, DEFAULT_DPI, DEFAULT_DPI,
+                    0, 
+                    (!(param.use_cropbox)),
+                    true,  // crop
+                    false, // printing
+                    nullptr, nullptr, nullptr, nullptr);
+        }
     }
+
     if(page_count >= 0)
         cerr << "Preprocessing: " << page_count << "/" << page_count;
     cerr << endl;
