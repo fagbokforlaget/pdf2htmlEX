@@ -129,10 +129,12 @@ void prepare_directories()
 
 void parse_options (int argc, char **argv)
 {
+    std::string tempPages = "";
     argparser
         // pages
         .add("first-page,f", &param.first_page, 1, "first page to convert")
         .add("last-page,l", &param.last_page, numeric_limits<int>::max(), "last page to convert")
+        .add("pages", &param.temporary_pages, "", "comma separated pages array")
 
         // dimensions
         .add("zoom", &param.zoom, 0, "zoom ratio", true)
@@ -241,6 +243,21 @@ void check_param()
     if (param.input_filename == "")
     {
         show_usage_and_exit();
+    }
+
+    if(param.temporary_pages != "") {
+        std::istringstream ss(param.temporary_pages);
+        int page;
+        try {
+            char ch;
+            while (ss >> page) {
+                ss>>ch; // ignore commas
+                param.pages_array.push_back(page);
+            }
+        } catch(...) {
+            cerr << "Error while parsing pages array!" << endl;
+            exit(EXIT_FAILURE);
+        }
     }
 
     if(param.output_filename.empty())
@@ -413,6 +430,13 @@ int main(int argc, char **argv)
             if (param.no_drm == 0)
                 throw "Copying of text from this document is not allowed.";
             cerr << "Document has copy-protection bit set." << endl;
+        }
+
+        const int page_number = doc->getNumPages();
+        for(auto const& value: param.pages_array) {
+            if(value > page_number || value < 1) {
+                throw "Page #" + std::to_string(value) + " is not in range [1 .. " + std::to_string(page_number) + "]";
+            }
         }
 
         param.first_page = min<int>(max<int>(param.first_page, 1), doc->getNumPages());
