@@ -239,12 +239,12 @@ protected:
      * factor1 & factor 2 are determined according to zoom and font-size-multiplier
      *
      */
-    double text_zoom_factor (void) const { return text_scale_factor1 * text_scale_factor2; }
+    double text_zoom_factor (void);
     double text_scale_factor1;
     double text_scale_factor2;
 
     // 1px on screen should be printed as print_scale()pt
-    double print_scale (void) const { return 96.0 / DEFAULT_DPI / text_zoom_factor(); }
+    double print_scale (void);
 
 
     const Param & param;
