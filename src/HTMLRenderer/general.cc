@@ -94,6 +94,42 @@ HTMLRenderer::~HTMLRenderer()
     ffw_finalize();
 }
 
+void HTMLRenderer::process_page(PDFDoc *doc, int page_index, int page_number, int page_count) {
+    if (param.tmp_file_size_limit != -1 && tmp_files.get_total_size() > param.tmp_file_size_limit * 1024) {
+        cerr << "Stop processing, reach max size\n";
+        return;
+    }
+
+    cerr << "Working: " << page_index << "/" << page_count << '\r' << flush;
+
+    if(param.split_pages)
+    {
+        // copy the string out, since we will reuse the buffer soon
+        string filled_template_filename = (char*)str_fmt(param.page_filename.c_str(), page_number);
+        auto page_fn = str_fmt("%s/%s", param.dest_dir.c_str(), filled_template_filename.c_str());
+        f_curpage = new ofstream((char*)page_fn, ofstream::binary);
+        if(!(*f_curpage))
+            throw string("Cannot open ") + (char*)page_fn + " for writing";
+        set_stream_flags((*f_curpage));
+
+        cur_page_filename = filled_template_filename;
+    }
+
+    doc->displayPage(this, page_number,
+            text_zoom_factor() * DEFAULT_DPI, text_zoom_factor() * DEFAULT_DPI,
+            0,
+            (!(param.use_cropbox)),
+            true,  // crop
+            false, // printing
+            nullptr, nullptr, nullptr, nullptr);
+
+    if(param.split_pages)
+    {
+        delete f_curpage;
+        f_curpage = nullptr;
+    }
+}
+
 void HTMLRenderer::process(PDFDoc *doc)
 {
     cur_doc = doc;
@@ -121,41 +157,18 @@ void HTMLRenderer::process(PDFDoc *doc)
             thumbs_render->init(doc);
     }
 
-    int page_count = (param.last_page - param.first_page + 1);
-    for(int i = param.first_page; i <= param.last_page ; ++i)
-    {
-        if (param.tmp_file_size_limit != -1 && tmp_files.get_total_size() > param.tmp_file_size_limit * 1024) {
-            cerr << "Stop processing, reach max size\n";
-            break;
-        }
-
-        cerr << "Working: " << (i-param.first_page) << "/" << page_count << '\r' << flush;
-
-        if(param.split_pages)
+    int page_count = 0;
+    if(param.pages_array.size() > 0) {
+        page_count = param.pages_array.size();
+        for(int i = 0; i < page_count ; i++) 
         {
-            // copy the string out, since we will reuse the buffer soon
-            string filled_template_filename = (char*)str_fmt(param.page_filename.c_str(), i);
-            auto page_fn = str_fmt("%s/%s", param.dest_dir.c_str(), filled_template_filename.c_str());
-            f_curpage = new ofstream((char*)page_fn, ofstream::binary);
-            if(!(*f_curpage))
-                throw string("Cannot open ") + (char*)page_fn + " for writing";
-            set_stream_flags((*f_curpage));
-
-            cur_page_filename = filled_template_filename;
+            process_page(doc, i, param.pages_array[i], page_count);
         }
-
-        doc->displayPage(this, i,
-                text_zoom_factor() * DEFAULT_DPI, text_zoom_factor() * DEFAULT_DPI,
-                0,
-                (!(param.use_cropbox)),
-                true,  // crop
-                false, // printing
-                nullptr, nullptr, nullptr, nullptr);
-
-        if(param.split_pages)
+    } else {
+        page_count = (param.last_page - param.first_page + 1);
+        for(int i = param.first_page; i <= param.last_page ; ++i) 
         {
-            delete f_curpage;
-            f_curpage = nullptr;
+            process_page(doc, i - param.first_page, i, page_count);
         }
     }
     if(page_count >= 0)

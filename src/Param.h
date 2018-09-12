@@ -10,6 +10,7 @@
 #define PARAM_H__
 
 #include <string>
+#include <vector>
 
 namespace pdf2htmlEX {
 
@@ -17,6 +18,8 @@ struct Param
 {
     // pages
     int first_page, last_page;
+    std::string temporary_pages;
+    std::vector<int> pages_array;
 
     // dimensions
     double zoom;
