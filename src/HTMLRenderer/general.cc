@@ -101,7 +101,7 @@ void HTMLRenderer::process_page(PDFDoc *doc, int page_index, int page_number, in
     }
 
     cerr << "Working: " << page_index << "/" << page_count << '\r' << flush;
-
+    pageNum = page_number;
     if(param.split_pages)
     {
         // copy the string out, since we will reuse the buffer soon
@@ -303,33 +303,6 @@ void HTMLRenderer::endPage() {
 void HTMLRenderer::pre_process(PDFDoc * doc)
 {
     preprocessor.process(doc);
-
-    /*
-     * determine scale factors
-     */
-    {
-        vector<double> zoom_factors;
-
-        if(is_positive(param.zoom))
-        {
-            zoom_factors.push_back(param.zoom);
-        }
-
-        if(is_positive(param.fit_width))
-        {
-            zoom_factors.push_back((param.fit_width) / preprocessor.get_max_width());
-        }
-
-        if(is_positive(param.fit_height))
-        {
-            zoom_factors.push_back((param.fit_height) / preprocessor.get_max_height());
-        }
-
-        double zoom = (zoom_factors.empty() ? 1.0 : (*min_element(zoom_factors.begin(), zoom_factors.end())));
-
-        text_scale_factor1 = max<double>(zoom, param.font_size_multiplier);
-        text_scale_factor2 = zoom / text_scale_factor1;
-    }
 
     // we may output utf8 characters, so always use binary
     {
@@ -611,6 +584,50 @@ void HTMLRenderer::embed_file(ostream & out, const string & path, const string &
             out.clear(); // out will set fail big if fin is empty
         }
     }
+}
+
+double HTMLRenderer::print_scale (void) { 
+    return 96.0 / DEFAULT_DPI / this->text_zoom_factor();
+}
+
+double HTMLRenderer::text_zoom_factor (void) { 
+    /*
+    * determine scale factors
+    */
+    std::vector<double> zoom_factors;
+    double page_width;
+    double page_height;
+    if(param.use_cropbox)
+    {
+        page_width = cur_doc->getPageCropWidth(pageNum);
+        page_height = cur_doc->getPageCropHeight(pageNum);
+    }
+    else
+    {
+        page_width = cur_doc->getPageMediaWidth(pageNum);
+        page_height = cur_doc->getPageMediaHeight(pageNum);
+    }
+
+    if(is_positive(param.zoom))
+    {
+        zoom_factors.push_back(param.zoom);
+    }
+
+    if(is_positive(param.fit_width))
+    {
+        zoom_factors.push_back((param.fit_width) / page_width);
+    }
+
+    if(is_positive(param.fit_height))
+    {
+        zoom_factors.push_back((param.fit_height) / page_height);
+    }
+
+    double zoom = (zoom_factors.empty() ? 1.0 : (*std::min_element(zoom_factors.begin(), zoom_factors.end())));
+    
+    text_scale_factor1 = std::max<double>(zoom, param.font_size_multiplier);
+    text_scale_factor2 = zoom / text_scale_factor1;
+    return zoom;
 }
 
 const std::string HTMLRenderer::MANIFEST_FILENAME = "manifest";
