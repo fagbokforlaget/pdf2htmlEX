@@ -11,7 +11,9 @@
 #include <algorithm>
 #include <sstream>
 #include <cctype>
+#include <vector>
 #include <unordered_set>
+#include <experimental/filesystem>
 
 #include <GlobalParams.h>
 #include <fofi/FoFiTrueType.h>
@@ -40,12 +42,25 @@
 #include <Gfx.h>
 #endif
 
+namespace fs = std::experimental::filesystem;
 namespace pdf2htmlEX {
 
 using std::min;
 using std::unordered_set;
 using std::cerr;
 using std::endl;
+using std::vector;
+
+
+vector<string> split_string(const std::string& str, char delim) {
+    std::stringstream ss(str);
+    std::string token;
+    vector<string> strt;
+    while (std::getline(ss, token, delim)) {
+        strt.push_back(token);
+    }
+    return strt;
+}
 
 string HTMLRenderer::dump_embedded_font (GfxFont * font, FontInfo & info)
 {
@@ -155,20 +170,52 @@ string HTMLRenderer::dump_embedded_font (GfxFont * font, FontInfo & info)
 
         obj.streamReset();
 
-        filepath = (char*)str_fmt("%s/%llx_%s%s", param.tmp_dir.c_str(), info.id, info.name->getCString(), suffix.c_str());
-        tmp_files.add(filepath);
+        std::string full_font_name(info.name->getCString());
+        auto parts = split_string(full_font_name, '+');
+        parts = split_string(parts[parts.size()-1], '_');
+        bool font_in_cache = false;
 
-        ofstream outf(filepath, ofstream::binary);
-        if(!outf)
-            throw string("Cannot open file ") + filepath + " for writing";
+        auto font_name = parts[parts.size()-1];
+        fs::path path = param.data_dir;
 
-        char buf[1024];
-        int len;
-        while((len = obj.streamGetChars(1024, (Guchar*)buf)) > 0)
-        {
-            outf.write(buf, len);
+        path /= "fonts";
+        
+        for (auto & p : fs::directory_iterator(path)) {
+            if(p.path().stem() == font_name) {
+                font_in_cache = true;
+                path = p.path();
+            }
         }
-        obj.streamClose();
+
+        if(font_in_cache) {
+            cerr << "Using cached font: " << font_name << endl;
+
+            info.name->Set(font_name.c_str());
+            filepath = (char*)str_fmt("%s/%s%s", param.tmp_dir.c_str(), info.name->getCString(), path.extension().c_str());
+            tmp_files.add(filepath);
+            bool already_exists = fs::exists(filepath);
+            if(!already_exists) {
+                fs::copy_file(path, filepath);
+            }
+
+        } else {
+
+            filepath = (char*)str_fmt("%s/%s%s", param.tmp_dir.c_str(), info.name->getCString(), suffix.c_str());
+            tmp_files.add(filepath);
+
+            ofstream outf(filepath, ofstream::binary);
+            if(!outf)
+                throw string("Cannot open file ") + filepath + " for writing";
+
+            char buf[1024];
+            int len;
+            while((len = obj.streamGetChars(1024, (Guchar*)buf)) > 0)
+            {
+                outf.write(buf, len);
+            }
+            obj.streamClose();
+
+        }
     }
     catch(int) 
     {
@@ -227,7 +274,7 @@ string HTMLRenderer::dump_type3_font (GfxFont * font, FontInfo & info)
     // dump each glyph into svg and combine them
     for(int code = 0; code < 256; ++code)
     {
-        if(!used_map[code]) continue;
+        //if(!used_map[code]) continue; // Disabled till regression test
 
         cairo_surface_t * surface = nullptr;
 
@@ -491,7 +538,7 @@ void HTMLRenderer::embed_font(const string & filepath, GfxFont * font, FontInfo 
 
             for(int i = 0; i < 256; ++i)
             {
-                if(!used_map[i]) continue;
+                //if(!used_map[i]) continue; // Disabled till regression test
 
                 auto cn = font_8bit->getCharName(i);
                 if(cn == nullptr)
@@ -594,9 +641,8 @@ void HTMLRenderer::embed_font(const string & filepath, GfxFont * font, FontInfo 
         bool retried = false; // avoid infinite loop
         for(int cur_code = 0; cur_code <= maxcode; ++cur_code)
         {
-            if(!used_map[cur_code])
-                continue;
-
+            //if(!used_map[cur_code]) // Disabled till regression test
+            //    continue;
             /*
              * Skip glyphs without names (only for non-ttf fonts)
              */
@@ -633,6 +679,7 @@ void HTMLRenderer::embed_font(const string & filepath, GfxFont * font, FontInfo 
             }
             else
             {
+
                 // collision detected
                 if(param.tounicode == 0)
                 {
@@ -693,8 +740,8 @@ void HTMLRenderer::embed_font(const string & filepath, GfxFont * font, FontInfo 
                     info.space_width = cur_width;
                     has_space = true;
                 }
-                
-                width_list[mapped_code] = (int)floor(cur_width * info.em_size + 0.5);
+                if(used_map[cur_code])  // Added till regression test
+                    width_list[mapped_code] = (int)floor(cur_width * info.em_size + 0.5);
             }
 
             if(param.debug)
@@ -796,9 +843,9 @@ void HTMLRenderer::embed_font(const string & filepath, GfxFont * font, FontInfo 
      * Ascent/Descent are not used in PDF, and the values in PDF may be wrong or inconsistent (there are 3 sets of them)
      * We need to reload in order to retrieve/fix accurate ascent/descent, some info won't be written to the font by fontforge until saved.
      */
-    string fn = (char*)str_fmt("%s/%llx_%s.%s",
+    string fn = (char*)str_fmt("%s/%s.%s",
         (param.embed_font ? param.tmp_dir : param.dest_dir).c_str(),
-        info.id, info.name->getCString(), param.font_format.c_str());
+        info.name->getCString(), param.font_format.c_str());
 
     if(param.embed_font)
         tmp_files.add(fn);
@@ -849,7 +896,9 @@ const FontInfo * HTMLRenderer::install_font(GfxFont * font)
     new_font_info.ascent = font->getAscent();
     new_font_info.descent = font->getDescent();
     new_font_info.is_type3 = (font->getType() == fontType3);
-    new_font_info.name = font->getName();
+    const char *font_name = str_fmt("%llx_%s", new_fn_id, font->getName()->getCString() );
+    GooString gs_font_name(font_name);
+    new_font_info.name = &gs_font_name;
 
     if(param.debug)
     {
@@ -1011,11 +1060,11 @@ void HTMLRenderer::export_remote_font(const FontInfo & info, const string & form
     string mime_type = iter->second;
 
     f_css.fs << "@font-face{"
-             << "font-family: \"" << info.id << "_" << info.name->getCString() << "\";"
+             << "font-family: \"" << info.name->getCString() << "\";"
              << "src:url(\"";
 
     {
-        auto fn = str_fmt("%llx_%s.%s", info.id, info.name->getCString(), format.c_str());
+        auto fn = str_fmt("%s.%s", info.name->getCString(), format.c_str());
         if(param.embed_font)
         {
             auto path = param.tmp_dir + "/" + (char*)fn;
@@ -1034,7 +1083,7 @@ void HTMLRenderer::export_remote_font(const FontInfo & info, const string & form
              << "format(\"" << css_font_format << "\");"
              << "}" // end of @font-face
              << "." << CSS::FONT_FAMILY_CN << info.id << "{"
-             << "font-family: \"" << info.id << "_" << info.name->getCString() << "\";"
+             << "font-family: \"" << info.name->getCString() << "\";"
              << "line-height:" << round(info.ascent - info.descent) << ";"
              << "font-style:normal;"
              << "font-weight:normal;"
