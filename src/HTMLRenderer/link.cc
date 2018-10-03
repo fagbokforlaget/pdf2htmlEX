@@ -152,7 +152,7 @@ string HTMLRenderer::get_linkaction_str(LinkAction * action, string & detail)
                         detail = get_linkdest_detail_str(dest, cur_catalog, pageno);
                         if(pageno > 0)
                         {
-                            dest_str = (char*)str_fmt("#%s%x", CSS::PAGE_FRAME_CN, pageno);
+                            dest_str = (char*)str_fmt("#%s%d", CSS::PAGE_FRAME_CN, pageno);
                         }
                         delete dest;
                     }
@@ -172,6 +172,14 @@ string HTMLRenderer::get_linkaction_str(LinkAction * action, string & detail)
             case actionLaunch:
                 {
                     cerr << "TODO: actionLaunch is not implemented." << endl;
+                }
+                break;
+            case actionNamed:
+                {
+                    const char * name = ((LinkNamed *)action)->getName()->getCString();
+                    if ( !strcmp( name, "NextPage" ) || !strcmp( name, "PrevPage" )) {
+                        dest_str = (char*)str_fmt("#%s", name);
+                    }
                 }
                 break;
             default:
@@ -303,8 +311,8 @@ void HTMLRenderer::processLink(AnnotLink * al)
 
     
 
-    // fix for IE
-    (*f_curpage) << "background-color:rgba(255,255,255,0.000001);";
+   
+    (*f_curpage) << "background:none";
 
     (*f_curpage) << "\"></a>";
 //
