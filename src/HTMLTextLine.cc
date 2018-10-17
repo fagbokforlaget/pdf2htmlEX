@@ -247,7 +247,8 @@ void HTMLTextLine::dump_text(ostream & out)
                     if(!(state_iter1->hash_umask & State::umask_by_id(State::WORD_SPACE_ID)))
                     {
                         double space_off = state_iter1->single_space_offset();
-                        if(std::abs(target - space_off) <= param.h_eps)
+                        double target_off = target - space_off;
+                        if(target_off >= 0 && target_off <= param.h_eps)
                         {
                             Unicode u = ' ';
                             writeUnicodes(out, &u, 1);
