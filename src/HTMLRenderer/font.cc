@@ -62,7 +62,7 @@ vector<string> split_string(const std::string& str, char delim) {
     return strt;
 }
 
-string HTMLRenderer::dump_embedded_font (GfxFont * font, FontInfo & info)
+string HTMLRenderer::dump_embedded_font (GfxFont * font, FontInfo & info, bool & font_in_cache)
 {
     if(info.is_type3)
         return dump_type3_font(font, info);
@@ -71,6 +71,7 @@ string HTMLRenderer::dump_embedded_font (GfxFont * font, FontInfo & info)
     Object font_obj, font_obj2, fontdesc_obj;
     string suffix;
     string filepath;
+    font_in_cache = false;
 
     long long fn_id = info.id;
 
@@ -173,30 +174,29 @@ string HTMLRenderer::dump_embedded_font (GfxFont * font, FontInfo & info)
         std::string full_font_name(info.name->getCString());
         auto parts = split_string(full_font_name, '+');
         parts = split_string(parts[parts.size()-1], '_');
-        bool font_in_cache = false;
+        
 
         auto font_name = parts[parts.size()-1];
-        fs::path path = param.data_dir;
+       fs::path path = param.data_dir;
 
-        path /= "fonts";
-        
-        for (auto & p : fs::directory_iterator(path)) {
-            if(p.path().stem() == font_name) {
-                font_in_cache = true;
-                path = p.path();
-            }
-        }
+       path /= "fonts";
+
+       for (auto & p : fs::directory_iterator(path)) {
+           if(p.path().stem() == font_name) {
+               font_in_cache = true;
+               path = p.path();
+           }
+       }
 
         if(font_in_cache) {
-            cerr << "Using cached font: " << font_name << endl;
+           cerr << "Using cached font: " << font_name << endl;
 
-            info.name->Set(font_name.c_str());
-            filepath = (char*)str_fmt("%s/%s%s", param.tmp_dir.c_str(), info.name->getCString(), path.extension().c_str());
-            tmp_files.add(filepath);
-            bool already_exists = fs::exists(filepath);
-            if(!already_exists) {
-                fs::copy_file(path, filepath);
-            }
+           info.name->Set(font_name.c_str());
+           filepath = (char*)str_fmt("%s/%s%s", param.dest_dir.c_str(), info.name->getCString(), path.extension().c_str());
+           bool already_exists = fs::exists(filepath);
+           if(!already_exists) {
+               fs::copy_file(path, filepath);
+           }
 
         } else {
 
@@ -966,12 +966,19 @@ const FontInfo * HTMLRenderer::install_font(GfxFont * font)
 
 void HTMLRenderer::install_embedded_font(GfxFont * font, FontInfo & info)
 {
-    auto path = dump_embedded_font(font, info);
+    bool font_in_cache;
+    auto path = dump_embedded_font(font, info, font_in_cache);
+    string format = param.font_format;
 
     if(path != "")
     {
-        embed_font(path, font, info);
-        export_remote_font(info, param.font_format, font);
+        if (!font_in_cache) {
+            embed_font(path, font, info);
+        } else {
+            format = get_suffix(path, 1);
+        }
+        
+        export_remote_font(info, format, font);
     }
     else
     {
