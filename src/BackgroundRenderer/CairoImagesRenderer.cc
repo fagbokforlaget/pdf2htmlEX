@@ -73,11 +73,11 @@ void CairoImagesRenderer::drawChar(GfxState *state, double x, double y,
     }
     // If a char is treated as image, it is not subject to cover test
     // (see HTMLRenderer::drawString), so don't increase drawn_char_count.
-    else if (param.correct_text_visibility) {
-        if (html_renderer->is_char_covered(drawn_char_count))
-            CairoImageOutputDev::drawChar(state,x,y,dx,dy,originX,originY,code,nBytes,u,uLen);
-        drawn_char_count++;
-    }
+    // else if (param.correct_text_visibility) {
+    //     if (html_renderer->is_char_covered(drawn_char_count))
+    //         CairoImageOutputDev::drawChar(state,x,y,dx,dy,originX,originY,code,nBytes,u,uLen);
+    //     drawn_char_count++;
+    // }
 }
 
 void CairoImagesRenderer::beginTextObject(GfxState *state)
