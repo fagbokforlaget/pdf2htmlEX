@@ -137,7 +137,7 @@ void parse_options (int argc, char **argv)
         .add("pages", &param.temporary_pages, "", "comma separated pages array")
 
         // dimensions
-        .add("zoom", &param.zoom, 0, "zoom ratio", true)
+        .add("zoom", &param.zoom, 1, "zoom ratio", true)
         .add("fit-width", &param.fit_width, 0, "fit width to <fp> pixels", true)
         .add("fit-height", &param.fit_height, 0, "fit height to <fp> pixels", true)
         .add("use-cropbox", &param.use_cropbox, 1, "use CropBox instead of MediaBox")
@@ -179,12 +179,12 @@ void parse_options (int argc, char **argv)
         .add("heps", &param.h_eps, 1.0, "horizontal threshold for merging text, in pixels")
         .add("veps", &param.v_eps, 1.0, "vertical threshold for merging text, in pixels")
         .add("space-threshold", &param.space_threshold, (1.0/8), "word break threshold (threshold * em)")
-        .add("font-size-multiplier", &param.font_size_multiplier, 4.0, "a value greater than 1 increases the rendering accuracy")
+        .add("font-size-multiplier", &param.font_size_multiplier, 2.0, "a value greater than 1 increases the rendering accuracy")
         .add("space-as-offset", &param.space_as_offset, 0, "treat space characters as offsets")
         .add("tounicode", &param.tounicode, 0, "how to handle ToUnicode CMaps (0=auto, 1=force, -1=ignore)")
         .add("optimize-text", &param.optimize_text, 0, "try to reduce the number of HTML elements used for text")
         .add("correct-text-visibility", &param.correct_text_visibility, 1, "0: Don't do text visibility checks. 1: Fully occluded text handled. 2: Partially occluded text handled")
-        .add("covered-text-dpi", &param.text_dpi, 300, "Rendering DPI to use if correct-text-visibility == 2 and there is partially covered text on the page")
+        .add("covered-text-dpi", &param.text_dpi, 144, "Rendering DPI to use if correct-text-visibility == 2 and there is partially covered text on the page")
 
         // background image
         .add("bg-format", &param.bg_format, "png", "specify background image format")

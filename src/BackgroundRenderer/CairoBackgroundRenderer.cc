@@ -135,7 +135,7 @@ bool CairoBackgroundRenderer::render_page(PDFDoc * doc, int pageno)
     bitmaps_in_current_page.clear();
 
     bool process_annotation = param.process_annotation;
-    doc->displayPage(this, pageno, param.actual_dpi, param.actual_dpi,
+    doc->displayPage(this, pageno, html_renderer->text_zoom_factor() * param.actual_dpi, html_renderer->text_zoom_factor() * param.actual_dpi,
             0,
             (!(param.use_cropbox)),
             false,

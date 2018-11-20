@@ -20,7 +20,7 @@ namespace pdf2htmlEX {
 #endif
 
 static const double EPS = 1e-6;
-static const double DEFAULT_DPI = 72.0;
+static const double DEFAULT_DPI = 144.0;
 extern const double ID_MATRIX[6];
 
 // For GB encoded font names

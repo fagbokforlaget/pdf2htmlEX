@@ -140,8 +140,8 @@ void SplashBackgroundRenderer::embed_image(int pageno)
             dump_image((char*)fn, xmin, ymin, xmax, ymax);
         }
 
-        double h_scale = html_renderer->text_zoom_factor() * DEFAULT_DPI / param.actual_dpi;
-        double v_scale = html_renderer->text_zoom_factor() * DEFAULT_DPI / param.actual_dpi;
+        double h_scale = html_renderer->text_zoom_factor();
+        double v_scale = html_renderer->text_zoom_factor();
 
         auto & f_page = *(html_renderer->f_curpage);
         auto & all_manager = html_renderer->all_manager;

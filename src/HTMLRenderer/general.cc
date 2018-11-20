@@ -99,7 +99,7 @@ HTMLRenderer::~HTMLRenderer()
 
 void HTMLRenderer::process_page(PDFDoc *doc, int page_index, int page_number, int page_count) {
     param.actual_dpi = param.desired_dpi;
-    param.max_dpi = 72 * MAX_DIMEN / max(doc->getPageCropWidth(page_index), doc->getPageCropHeight(page_index));
+    param.max_dpi = 144 * MAX_DIMEN / max(doc->getPageCropWidth(page_index), doc->getPageCropHeight(page_index));
 
     if (param.actual_dpi > param.max_dpi) {
         param.actual_dpi = param.max_dpi;
@@ -127,7 +127,7 @@ void HTMLRenderer::process_page(PDFDoc *doc, int page_index, int page_number, in
     }
 
     doc->displayPage(this, page_number,
-            text_zoom_factor() * DEFAULT_DPI, text_zoom_factor() * DEFAULT_DPI,
+            text_zoom_factor() * param.actual_dpi, text_zoom_factor() * param.actual_dpi,
             0,
             (!(param.use_cropbox)),
             true,  // crop
@@ -646,7 +646,7 @@ double HTMLRenderer::text_zoom_factor (void) {
     
     text_scale_factor1 = std::max<double>(zoom, param.font_size_multiplier);
     text_scale_factor2 = zoom / text_scale_factor1;
-    return zoom;
+    return zoom / 2.0;
 }
 
 const std::string HTMLRenderer::MANIFEST_FILENAME = "manifest";

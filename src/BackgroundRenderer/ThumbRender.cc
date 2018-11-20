@@ -71,7 +71,7 @@ bool ThumbRenderer::render_page(PDFDoc * doc, int pageno)
     setCairo(cr);
     
     bool process_annotation = param.process_annotation;
-    doc->displayPage(this, pageno, h_res, v_res,
+    doc->displayPage(this, pageno, param.actual_dpi, param.actual_dpi,
             0, 
             (!(param.use_cropbox)),
             false, false,

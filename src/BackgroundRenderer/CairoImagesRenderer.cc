@@ -139,7 +139,7 @@ bool CairoImagesRenderer::render_page(PDFDoc * doc, int pageno)
     bitmaps_in_current_page.clear();
 
     bool process_annotation = param.process_annotation;
-    doc->displayPage(this, pageno, param.actual_dpi, param.actual_dpi,
+    doc->displayPage(this, pageno, html_renderer->text_zoom_factor() * param.actual_dpi, html_renderer->text_zoom_factor() * param.actual_dpi,
             0, 
             (!(param.use_cropbox)),
             false, 
@@ -162,8 +162,8 @@ void CairoImagesRenderer::embed_image(int pageno)
 
         double x1, x2;	// image x coordinates
         double y1, y2;	// image y coordinates
-        double h_scale = html_renderer->text_zoom_factor() * DEFAULT_DPI / param.actual_dpi;
-        double v_scale = html_renderer->text_zoom_factor() * DEFAULT_DPI / param.actual_dpi;
+        double h_scale = html_renderer->text_zoom_factor();
+        double v_scale = html_renderer->text_zoom_factor();
 
         image->getRect (&x1, &y1, &x2, &y2);
 
