@@ -129,10 +129,12 @@ void prepare_directories()
 
 void parse_options (int argc, char **argv)
 {
+    std::string tempPages = "";
     argparser
         // pages
         .add("first-page,f", &param.first_page, 1, "first page to convert")
         .add("last-page,l", &param.last_page, numeric_limits<int>::max(), "last page to convert")
+        .add("pages", &param.temporary_pages, "", "comma separated pages array")
 
         // dimensions
         .add("zoom", &param.zoom, 0, "zoom ratio", true)
@@ -150,13 +152,14 @@ void parse_options (int argc, char **argv)
         .add("embed-outline", &param.embed_outline, 1, "embed outlines into output")
         .add("split-pages", &param.split_pages, 0, "split pages into separate files")
         .add("dest-dir", &param.dest_dir, ".", "specify destination directory")
+        .add("thumbs-dir", &param.thumbs_dir, "/thumbs", "specify destination directory")
         .add("css-filename", &param.css_filename, "", "filename of the generated css file")
         .add("page-filename", &param.page_filename, "", "filename template for split pages ")
         .add("outline-filename", &param.outline_filename, "", "filename of the generated outline file")
         .add("process-nontext", &param.process_nontext, 1, "render graphics in addition to text")
         .add("process-outline", &param.process_outline, 1, "show outline in HTML")
         .add("process-annotation", &param.process_annotation, 0, "show annotation in HTML")
-        .add("process-form", &param.process_form, 0, "include text fields and radio buttons")
+        .add("process-form", &param.process_form, 1, "include text fields and radio buttons")
         .add("printing", &param.printing, 1, "enable printing support")
         .add("fallback", &param.fallback, 0, "output in fallback mode")
         .add("tmp-file-size-limit", &param.tmp_file_size_limit, -1, "Maximum size (in KB) used by temporary files, -1 for no limit")
@@ -185,6 +188,7 @@ void parse_options (int argc, char **argv)
 
         // background image
         .add("bg-format", &param.bg_format, "png", "specify background image format")
+        .add("images", &param.images, 0, "with all images")
         .add("svg-node-count-limit", &param.svg_node_count_limit, -1, "if node count in a svg background image exceeds this limit,"
                 " fall back this page to bitmap background; negative value means no limit")
         .add("svg-embed-bitmap", &param.svg_embed_bitmap, 1, "1: embed bitmaps in svg background; 0: dump bitmaps to external files if possible")
@@ -242,6 +246,21 @@ void check_param()
     if (param.input_filename == "")
     {
         show_usage_and_exit();
+    }
+
+    if(param.temporary_pages != "") {
+        std::istringstream ss(param.temporary_pages);
+        int page;
+        try {
+            char ch;
+            while (ss >> page) {
+                ss>>ch; // ignore commas
+                param.pages_array.push_back(page);
+            }
+        } catch(...) {
+            cerr << "Error while parsing pages array!" << endl;
+            exit(EXIT_FAILURE);
+        }
     }
 
     if(param.output_filename.empty())
@@ -380,6 +399,7 @@ int main(int argc, char **argv)
     try
     {
         create_directories(param.dest_dir);
+        create_directories(param.dest_dir + param.thumbs_dir);
     }
     catch (const string & s)
     {
@@ -414,6 +434,13 @@ int main(int argc, char **argv)
             if (param.no_drm == 0)
                 throw "Copying of text from this document is not allowed.";
             cerr << "Document has copy-protection bit set." << endl;
+        }
+
+        const int page_number = doc->getNumPages();
+        for(auto const& value: param.pages_array) {
+            if(value > page_number || value < 1) {
+                throw "Page #" + std::to_string(value) + " is not in range [1 .. " + std::to_string(page_number) + "]";
+            }
         }
 
         param.first_page = min<int>(max<int>(param.first_page, 1), doc->getNumPages());

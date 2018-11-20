@@ -10,6 +10,7 @@
 #define PARAM_H__
 
 #include <string>
+#include <vector>
 
 namespace pdf2htmlEX {
 
@@ -17,6 +18,8 @@ struct Param
 {
     // pages
     int first_page, last_page;
+    std::string temporary_pages;
+    std::vector<int> pages_array;
 
     // dimensions
     double zoom;
@@ -35,6 +38,7 @@ struct Param
     int embed_outline;
     int split_pages;
     std::string dest_dir;
+    std::string thumbs_dir;
     std::string css_filename;
     std::string page_filename;
     std::string outline_filename;
@@ -68,6 +72,7 @@ struct Param
 
     // background image
     std::string bg_format;
+    int images;
     int svg_node_count_limit;
     int svg_embed_bitmap;
 

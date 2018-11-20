@@ -17,7 +17,7 @@ void create_directories(const std::string & path);
 bool is_truetype_suffix(const std::string & suffix);
 
 std::string get_filename(const std::string & path);
-std::string get_suffix(const std::string & path);
+std::string get_suffix(const std::string & path, int n = 0);
 
 /**
  * Sanitize all occurrences of '%' except for the first valid format specifier. Filename

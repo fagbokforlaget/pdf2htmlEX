@@ -159,7 +159,7 @@ void HTMLTextLine::dump_text(ostream & out)
             << " " << CSS::TRANSFORM_MATRIX_CN << all_manager.transform_matrix.install(line_state.transform_matrix)
             << " " << CSS::LEFT_CN             << all_manager.left.install(line_state.x - clip_x1)
             << " " << CSS::HEIGHT_CN           << all_manager.height.install(ascent)
-            << " " << CSS::BOTTOM_CN           << all_manager.bottom.install(line_state.y - clip_y1)
+            << " " << CSS::TOP_CN           << all_manager.top.install(line_state.y - clip_y1 - ascent)
             ;
         // it will be closed by the first state
     }
@@ -247,7 +247,8 @@ void HTMLTextLine::dump_text(ostream & out)
                     if(!(state_iter1->hash_umask & State::umask_by_id(State::WORD_SPACE_ID)))
                     {
                         double space_off = state_iter1->single_space_offset();
-                        if(std::abs(target - space_off) <= param.h_eps)
+                        double target_off = target - space_off;
+                        if(target_off >= 0 && target_off <= param.h_eps)
                         {
                             Unicode u = ' ';
 				// Sometimes we guess wrong whether we have a valid space character, so ensure it is always hidden
@@ -310,10 +311,10 @@ void HTMLTextLine::clear(void)
     text.clear();
 }
 
-void HTMLTextLine::clip(const HTMLClipState & clip_state)
+    void HTMLTextLine::clip(const HTMLClipState & clip_state, double height)
 {
     clip_x1 = clip_state.xmin;
-    clip_y1 = clip_state.ymin;
+    clip_y1 = height - clip_state.ymax;
 }
 
 void HTMLTextLine::prepare(void)

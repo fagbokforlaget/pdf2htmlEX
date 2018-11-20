@@ -6,7 +6,7 @@
 #define HTMLSTATE_H__
 
 #include <functional>
-
+#include "goo/GooString.h"
 #include "Color.h"
 
 namespace pdf2htmlEX {
@@ -19,6 +19,7 @@ struct FontInfo
     double space_width;
     double ascent, descent;
     bool is_type3;
+    GooString *name;
     /*
      * As Type 3 fonts have a font matrix
      * a glyph of 1pt can be very large or very small

@@ -67,11 +67,11 @@ void CairoBackgroundRenderer::drawChar(GfxState *state, double x, double y,
     }
     // If a char is treated as image, it is not subject to cover test
     // (see HTMLRenderer::drawString), so don't increase drawn_char_count.
-    else if (param.correct_text_visibility) {
-        if (html_renderer->is_char_covered(drawn_char_count))
-            CairoOutputDev::drawChar(state,x,y,dx,dy,originX,originY,code,nBytes,u,uLen);
-        drawn_char_count++;
-    }
+    // else if (param.correct_text_visibility) {
+    //     if (html_renderer->is_char_covered(drawn_char_count))
+    //         CairoOutputDev::drawChar(state,x,y,dx,dy,originX,originY,code,nBytes,u,uLen);
+    //     drawn_char_count++;
+    // }
 }
 
 void CairoBackgroundRenderer::beginTextObject(GfxState *state)
@@ -108,7 +108,7 @@ void CairoBackgroundRenderer::init(PDFDoc * doc)
 }
 
 static GBool annot_cb(Annot *, void * pflag) {
-    return (*((bool*)pflag)) ? gTrue : gFalse;
+    return (*((bool*)pflag)) ? gFalse : gTrue;
 };
 
 bool CairoBackgroundRenderer::render_page(PDFDoc * doc, int pageno)
@@ -116,19 +116,10 @@ bool CairoBackgroundRenderer::render_page(PDFDoc * doc, int pageno)
     drawn_char_count = 0;
     double page_width;
     double page_height;
-    if(param.use_cropbox)
-    {
-        page_width = doc->getPageCropWidth(pageno);
-        page_height = doc->getPageCropHeight(pageno);
-    }
-    else
-    {
-        page_width = doc->getPageMediaWidth(pageno);
-        page_height = doc->getPageMediaHeight(pageno);
-    }
-
-    if (doc->getPageRotate(pageno) == 90 || doc->getPageRotate(pageno) == 270)
-        std::swap(page_height, page_width);
+    
+    page_width = html_renderer->html_text_page.get_width();
+    page_height = html_renderer->html_text_page.get_height();
+    
 
     string fn = (char*)html_renderer->str_fmt("%s/bg%x.svg", (param.embed_image ? param.tmp_dir : param.dest_dir).c_str(), pageno);
     if(param.embed_image)

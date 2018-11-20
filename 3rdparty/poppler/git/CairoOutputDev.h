@@ -69,7 +69,6 @@ public:
 
   // Set the image cairo surface
   void setImage (cairo_surface_t *image);
-  
   // Get the image cairo surface
   cairo_surface_t *getImage () const { return image; }
 
@@ -396,6 +395,7 @@ public:
   // Does this device use upside-down coordinates?
   // (Upside-down means (0,0) is the top left corner of the page.)
   GBool upsideDown() override { return gTrue; }
+  void clearImages();
 
   // Does this device use drawChar() or drawString()?
   GBool useDrawChar() override { return gFalse; }

@@ -80,6 +80,7 @@ HTMLRenderer::HTMLRenderer(Param & param)
     all_manager.height      .set_eps(EPS);
     all_manager.width       .set_eps(EPS);
     all_manager.bottom      .set_eps(EPS);
+    all_manager.top         .set_eps(EPS);
 
     tracer.on_char_drawn =
             [this](cairo_t *cairo, double * box) { covered_text_detector.add_char_bbox(cairo, box); };
@@ -95,6 +96,55 @@ HTMLRenderer::~HTMLRenderer()
 }
 
 #define MAX_DIMEN 9000
+
+void HTMLRenderer::process_page(PDFDoc *doc, int page_index, int page_number, int page_count) {
+    param.actual_dpi = param.desired_dpi;
+    param.max_dpi = 72 * MAX_DIMEN / max(doc->getPageCropWidth(page_index), doc->getPageCropHeight(page_index));
+
+    if (param.actual_dpi > param.max_dpi) {
+        param.actual_dpi = param.max_dpi;
+        printf("Warning:Page %d clamped to %f DPI\n", page_index, param.actual_dpi);
+    }
+
+    if (param.tmp_file_size_limit != -1 && tmp_files.get_total_size() > param.tmp_file_size_limit * 1024) {
+        cerr << "Stop processing, reach max size\n";
+        return;
+    }
+
+    cerr << "Working: " << page_index << "/" << page_count << '\r' << flush;
+    pageNum = page_number;
+    if(param.split_pages)
+    {
+        // copy the string out, since we will reuse the buffer soon
+        string filled_template_filename = (char*)str_fmt(param.page_filename.c_str(), page_number);
+        auto page_fn = str_fmt("%s/%s", param.dest_dir.c_str(), filled_template_filename.c_str());
+        f_curpage = new ofstream((char*)page_fn, ofstream::binary);
+        if(!(*f_curpage))
+            throw string("Cannot open ") + (char*)page_fn + " for writing";
+        set_stream_flags((*f_curpage));
+
+        cur_page_filename = filled_template_filename;
+    }
+
+    doc->displayPage(this, page_number,
+            text_zoom_factor() * DEFAULT_DPI, text_zoom_factor() * DEFAULT_DPI,
+            0,
+            (!(param.use_cropbox)),
+            true,  // crop
+            false, // printing
+            nullptr, nullptr, nullptr, nullptr);
+
+
+    if (param.desired_dpi != param.actual_dpi) {
+        printf("Page %d DPI change %.1f => %.1f\n", page_index, param.desired_dpi, param.actual_dpi);
+    }
+
+    if(param.split_pages)
+    {
+        delete f_curpage;
+        f_curpage = nullptr;
+    }
+}
 
 void HTMLRenderer::process(PDFDoc *doc)
 {
@@ -117,57 +167,24 @@ void HTMLRenderer::process(PDFDoc *doc)
         fallback_bg_renderer = BackgroundRenderer::getFallbackBackgroundRenderer(this, param);
         if (fallback_bg_renderer)
             fallback_bg_renderer->init(doc);
+
+        thumbs_render = BackgroundRenderer::getThumbRender(this, param);
+        if (thumbs_render)
+            thumbs_render->init(doc);
     }
 
-    int page_count = (param.last_page - param.first_page + 1);
-    for(int i = param.first_page; i <= param.last_page ; ++i)
-    {
-        param.actual_dpi = param.desired_dpi;
-        param.max_dpi = 72 * MAX_DIMEN / max(doc->getPageCropWidth(i), doc->getPageCropHeight(i));
-
-        if (param.actual_dpi > param.max_dpi) {
-            param.actual_dpi = param.max_dpi;
-            printf("Warning:Page %d clamped to %f DPI\n", i, param.actual_dpi);
-        }
-
-        if (param.tmp_file_size_limit != -1 && tmp_files.get_total_size() > param.tmp_file_size_limit * 1024) {
-            if(param.quiet == 0)
-                cerr << "Stop processing, reach max size\n";
-            break;
-        }
-
-        if (param.quiet == 0)
-            cerr << "Working: " << (i-param.first_page) << "/" << page_count << '\r' << flush;
-
-        if(param.split_pages)
+    int page_count = 0;
+    if(param.pages_array.size() > 0) {
+        page_count = param.pages_array.size();
+        for(int i = 0; i < page_count ; i++) 
         {
-            // copy the string out, since we will reuse the buffer soon
-            string filled_template_filename = (char*)str_fmt(param.page_filename.c_str(), i);
-            auto page_fn = str_fmt("%s/%s", param.dest_dir.c_str(), filled_template_filename.c_str());
-            f_curpage = new ofstream((char*)page_fn, ofstream::binary);
-            if(!(*f_curpage))
-                throw string("Cannot open ") + (char*)page_fn + " for writing";
-            set_stream_flags((*f_curpage));
-
-            cur_page_filename = filled_template_filename;
+            process_page(doc, i, param.pages_array[i], page_count);
         }
-
-        doc->displayPage(this, i,
-                text_zoom_factor() * DEFAULT_DPI, text_zoom_factor() * DEFAULT_DPI,
-                0,
-                (!(param.use_cropbox)),
-                true,  // crop
-                false, // printing
-                nullptr, nullptr, nullptr, nullptr);
-
-        if (param.desired_dpi != param.actual_dpi) {
-            printf("Page %d DPI change %.1f => %.1f\n", i, param.desired_dpi, param.actual_dpi);
-        }
-
-        if(param.split_pages)
+    } else {
+        page_count = (param.last_page - param.first_page + 1);
+        for(int i = param.first_page; i <= param.last_page ; ++i) 
         {
-            delete f_curpage;
-            f_curpage = nullptr;
+            process_page(doc, i - param.first_page, i, page_count);
         }
     }
     if(page_count >= 0 && param.quiet == 0)
@@ -185,6 +202,7 @@ void HTMLRenderer::process(PDFDoc *doc)
 
     bg_renderer = nullptr;
     fallback_bg_renderer = nullptr;
+    thumbs_render = nullptr;
 
     if(param.quiet == 0)
         cerr << endl;
@@ -254,6 +272,11 @@ void HTMLRenderer::endPage() {
         }
     }
 
+    if (thumbs_render->render_page(cur_doc, pageNum))
+    {
+        thumbs_render->embed_image(pageNum);
+    }
+
     // dump all text
     html_text_page.dump_text(*f_curpage);
     html_text_page.dump_css(f_css.fs);
@@ -299,33 +322,6 @@ void HTMLRenderer::endPage() {
 void HTMLRenderer::pre_process(PDFDoc * doc)
 {
     preprocessor.process(doc);
-
-    /*
-     * determine scale factors
-     */
-    {
-        vector<double> zoom_factors;
-
-        if(is_positive(param.zoom))
-        {
-            zoom_factors.push_back(param.zoom);
-        }
-
-        if(is_positive(param.fit_width))
-        {
-            zoom_factors.push_back((param.fit_width) / preprocessor.get_max_width());
-        }
-
-        if(is_positive(param.fit_height))
-        {
-            zoom_factors.push_back((param.fit_height) / preprocessor.get_max_height());
-        }
-
-        double zoom = (zoom_factors.empty() ? 1.0 : (*min_element(zoom_factors.begin(), zoom_factors.end())));
-
-        text_scale_factor1 = max<double>(zoom, param.font_size_multiplier);
-        text_scale_factor2 = zoom / text_scale_factor1;
-    }
 
     // we may output utf8 characters, so always use binary
     {
@@ -527,6 +523,7 @@ void HTMLRenderer::dump_css (void)
     all_manager.fill_color      .dump_css(f_css.fs);
     all_manager.font_size       .dump_css(f_css.fs);
     all_manager.bottom          .dump_css(f_css.fs);
+    all_manager.top             .dump_css(f_css.fs);
     all_manager.height          .dump_css(f_css.fs);
     all_manager.width           .dump_css(f_css.fs);
     all_manager.left            .dump_css(f_css.fs);
@@ -546,6 +543,7 @@ void HTMLRenderer::dump_css (void)
         all_manager.fill_color      .dump_print_css(f_css.fs, ps);
         all_manager.font_size       .dump_print_css(f_css.fs, ps);
         all_manager.bottom          .dump_print_css(f_css.fs, ps);
+        all_manager.top             .dump_print_css(f_css.fs, ps);
         all_manager.height          .dump_print_css(f_css.fs, ps);
         all_manager.width           .dump_print_css(f_css.fs, ps);
         all_manager.left            .dump_print_css(f_css.fs, ps);
@@ -605,6 +603,50 @@ void HTMLRenderer::embed_file(ostream & out, const string & path, const string &
             out.clear(); // out will set fail big if fin is empty
         }
     }
+}
+
+double HTMLRenderer::print_scale (void) { 
+    return 96.0 / DEFAULT_DPI / this->text_zoom_factor();
+}
+
+double HTMLRenderer::text_zoom_factor (void) { 
+    /*
+    * determine scale factors
+    */
+    std::vector<double> zoom_factors;
+    double page_width;
+    double page_height;
+    if(param.use_cropbox)
+    {
+        page_width = cur_doc->getPageCropWidth(pageNum);
+        page_height = cur_doc->getPageCropHeight(pageNum);
+    }
+    else
+    {
+        page_width = cur_doc->getPageMediaWidth(pageNum);
+        page_height = cur_doc->getPageMediaHeight(pageNum);
+    }
+
+    if(is_positive(param.zoom))
+    {
+        zoom_factors.push_back(param.zoom);
+    }
+
+    if(is_positive(param.fit_width))
+    {
+        zoom_factors.push_back((param.fit_width) / page_width);
+    }
+
+    if(is_positive(param.fit_height))
+    {
+        zoom_factors.push_back((param.fit_height) / page_height);
+    }
+
+    double zoom = (zoom_factors.empty() ? 1.0 : (*std::min_element(zoom_factors.begin(), zoom_factors.end())));
+    
+    text_scale_factor1 = std::max<double>(zoom, param.font_size_multiplier);
+    text_scale_factor2 = zoom / text_scale_factor1;
+    return zoom;
 }
 
 const std::string HTMLRenderer::MANIFEST_FILENAME = "manifest";

@@ -122,7 +122,7 @@ string get_filename (const string & path)
     return path.substr(idx + 1);
 }
 
-string get_suffix(const string & path)
+string get_suffix(const string & path, int n)
 {
     string fn = get_filename(path);
     size_t idx = fn.rfind('.');
@@ -130,7 +130,7 @@ string get_suffix(const string & path)
         return "";
     else
     {
-        string s = fn.substr(idx);
+        string s = fn.substr(idx + n);
         for(auto & c : s)
             c = tolower(c);
         return s;

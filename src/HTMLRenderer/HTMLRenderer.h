@@ -50,6 +50,8 @@ struct HTMLRenderer : OutputDev
     HTMLRenderer(Param & param);
     virtual ~HTMLRenderer();
 
+    void process_page(PDFDoc *doc, int page_index, int page_number, int page_count);
+
     void process(PDFDoc * doc);
 
     ////////////////////////////////////////////////////
@@ -195,7 +197,7 @@ protected:
      * local font: to be substituted with a local (client side) font
      */
     ////////////////////////////////////////////////////
-    std::string dump_embedded_font(GfxFont * font, FontInfo & info);
+    std::string dump_embedded_font(GfxFont * font, FontInfo & info, bool & font_in_cache);
     std::string dump_type3_font(GfxFont * font, FontInfo & info);
     void embed_font(const std::string & filepath, GfxFont * font, FontInfo & info, bool get_metric_only = false);
     const FontInfo * install_font(GfxFont * font);
@@ -244,12 +246,12 @@ protected:
      * factor1 & factor 2 are determined according to zoom and font-size-multiplier
      *
      */
-    double text_zoom_factor (void) const { return text_scale_factor1 * text_scale_factor2; }
+    double text_zoom_factor (void);
     double text_scale_factor1;
     double text_scale_factor2;
 
     // 1px on screen should be printed as print_scale()pt
-    double print_scale (void) const { return 96.0 / DEFAULT_DPI / text_zoom_factor(); }
+    double print_scale (void);
 
 
     Param & param;
@@ -332,11 +334,13 @@ protected:
 
     // render background image
     friend class SplashBackgroundRenderer; // ugly!
+    friend class CairoImagesRenderer; // ugly!
+    friend class ThumbRenderer; // ugly!
 #if ENABLE_SVG
     friend class CairoBackgroundRenderer; // ugly!
 #endif
 
-    std::unique_ptr<BackgroundRenderer> bg_renderer, fallback_bg_renderer;
+    std::unique_ptr<BackgroundRenderer> bg_renderer, fallback_bg_renderer, thumbs_render;
 
     struct {
         std::ofstream fs;

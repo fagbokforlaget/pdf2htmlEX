@@ -74,7 +74,7 @@ void HTMLTextPage::dump_text(ostream & out)
             {
                 if(has_clip)
                 {
-                    (*text_line_iter)->clip(cs);
+                    (*text_line_iter)->clip(cs, page_height);
                 }
                 (*text_line_iter)->dump_text(out);
                 ++text_line_iter;
