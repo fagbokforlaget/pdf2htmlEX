@@ -137,7 +137,7 @@ void parse_options (int argc, char **argv)
         .add("pages", &param.temporary_pages, "", "comma separated pages array")
 
         // dimensions
-        .add("zoom", &param.zoom, 1, "zoom ratio", true)
+        .add("zoom", &param.zoom, 0, "zoom ratio", true)
         .add("fit-width", &param.fit_width, 0, "fit width to <fp> pixels", true)
         .add("fit-height", &param.fit_height, 0, "fit height to <fp> pixels", true)
         .add("use-cropbox", &param.use_cropbox, 1, "use CropBox instead of MediaBox")
