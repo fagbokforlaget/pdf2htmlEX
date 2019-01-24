@@ -197,7 +197,8 @@ protected:
      * local font: to be substituted with a local (client side) font
      */
     ////////////////////////////////////////////////////
-    std::string dump_embedded_font(GfxFont * font, FontInfo & info, bool & font_in_cache);
+    std::string dump_embedded_font(GfxFont * font, FontInfo & info);
+    bool copyCachedFont(FontInfo & info, bool to_copy, std::string & output_path);
     std::string dump_type3_font(GfxFont * font, FontInfo & info);
     void embed_font(const std::string & filepath, GfxFont * font, FontInfo & info, bool get_metric_only = false);
     const FontInfo * install_font(GfxFont * font);
