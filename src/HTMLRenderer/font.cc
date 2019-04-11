@@ -71,9 +71,7 @@ bool HTMLRenderer::copyCachedFont(FontInfo & info, bool to_copy, std::string & o
     
 
     auto font_name = parts[parts.size()-1];
-    fs::path path = param.data_dir;
-
-    path /= "fonts";
+    fs::path path = param.fonts_dir;
 
     for (auto & p : fs::directory_iterator(path)) {
         if(p.path().stem() == font_name) {

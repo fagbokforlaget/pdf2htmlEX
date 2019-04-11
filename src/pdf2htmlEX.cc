@@ -22,6 +22,7 @@
 #include <PDFDoc.h>
 #include <PDFDocFactory.h>
 #include <GlobalParams.h>
+#include <experimental/filesystem>
 
 #include "pdf2htmlEX-config.h"
 
@@ -42,6 +43,7 @@
 
 using namespace std;
 using namespace pdf2htmlEX;
+namespace fs = std::experimental::filesystem;
 
 Param param;
 ArgParser argparser;
@@ -202,6 +204,7 @@ void parse_options (int argc, char **argv)
         .add("clean-tmp", &param.clean_tmp, 1, "remove temporary files after conversion")
         .add("tmp-dir", &param.tmp_dir, param.tmp_dir, "specify the location of temporary directory")
         .add("data-dir", &param.data_dir, param.data_dir, "specify data directory")
+        .add("fonts-dir", &param.fonts_dir, param.fonts_dir, "specify fonts directory")
         .add("poppler-data-dir", &param.poppler_data_dir, param.poppler_data_dir, "specify poppler data directory")
         .add("debug", &param.debug, 0, "print debugging information")
         .add("proof", &param.proof, 0, "texts are drawn on both text layer and background for proof")
@@ -386,6 +389,11 @@ int main(int argc, char **argv)
     param.tmp_dir = string(tmp);
     param.data_dir = PDF2HTMLEX_DATA_PATH;
 #endif
+
+    fs::path path = param.data_dir;
+
+    path /= "fonts";
+    param.fonts_dir = path;
 
     parse_options(argc, argv);
     check_param();

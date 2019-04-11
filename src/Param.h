@@ -84,6 +84,7 @@ struct Param
     int clean_tmp;
     std::string data_dir;
     std::string poppler_data_dir;
+    std::string fonts_dir;
     std::string tmp_dir;
     int debug;
     int proof;
