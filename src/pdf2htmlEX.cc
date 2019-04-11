@@ -398,6 +398,13 @@ int main(int argc, char **argv)
     parse_options(argc, argv);
     check_param();
 
+    if(param.fonts_dir == path) {
+        path = param.data_dir;
+
+        path /= "fonts";
+        param.fonts_dir = path;
+    }
+
     //prepare the directories
     prepare_directories();
 
