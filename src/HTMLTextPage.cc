@@ -137,42 +137,11 @@ void HTMLTextPage::clip(const HTMLClipState & clip_state)
     clips.emplace_back(clip_state, text_lines.size());
 }
 
-
-// bool compare(HTMLTextLine* a, HTMLTextLine* b) {
-//     double top = a->get_top_offset();
-//     double top2 = b->get_top_offset();
-//     return top2 > top;
-// }
-
 void HTMLTextPage::optimize(void)
 {
     //TODO
     //group lines with same x-axis
     //collect common states 
-    int lines_count = text_lines.size();
-
-    //std::sort(text_lines.begin(), text_lines.end(), compare);
-
-    for(int i = 0; i < lines_count; i++) {
-        auto line = text_lines[i];
-        if(line->removed) continue;
-
-        for(int j = 0; j < lines_count; j++) {
-            if(i == j) continue;
-            
-            auto line2 = text_lines[j];
-            if(line2->removed) continue;
-
-            if(line->optimize_lines(line2)) {
-                text_lines[j]->removed = true;
-                optimize();
-                return;
-
-                // text_lines.erase(text_lines.begin() + j);
-            }
-        }
-    }
-
 }
 
 } // namespace pdf2htmlEX
