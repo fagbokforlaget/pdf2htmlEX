@@ -60,8 +60,8 @@ link_directories(${FONTFORGE_LIBRARY_DIRS})
 set(PDF2HTMLEX_LIBS ${PDF2HTMLEX_LIBS} ${FONTFORGE_LIBRARIES})
 
 # debug build flags (overwrite default cmake debug flags)
-set(CMAKE_C_FLAGS_DEBUG "-ggdb -pg")
-set(CMAKE_CXX_FLAGS_DEBUG "-ggdb -pg")
+set(CMAKE_C_FLAGS_DEBUG "-ggdb -pg -O0")
+set(CMAKE_CXX_FLAGS_DEBUG "-ggdb -pg -O0")
 set(CMAKE_EXE_LINKER_FLAGS_DEBUG "-pg")
 
 # release build flags (overwrite default cmake release flags)
