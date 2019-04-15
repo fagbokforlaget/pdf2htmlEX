@@ -395,7 +395,6 @@ public:
   // Does this device use upside-down coordinates?
   // (Upside-down means (0,0) is the top left corner of the page.)
   GBool upsideDown() override { return gTrue; }
-  void clearImages();
 
   // Does this device use drawChar() or drawString()?
   GBool useDrawChar() override { return gFalse; }
@@ -499,14 +498,15 @@ public:
 
   //----- transparency groups and soft masks
   void beginTransparencyGroup(GfxState * /*state*/, double * /*bbox*/,
-			      GfxColorSpace * /*blendingColorSpace*/,
-			      GBool /*isolated*/, GBool /*knockout*/,
-			      GBool /*forSoftMask*/) override {}
-  void endTransparencyGroup(GfxState * /*state*/) override {}
-  void paintTransparencyGroup(GfxState * /*state*/, double * /*bbox*/) override {}
+				      GfxColorSpace * /*blendingColorSpace*/,
+				      GBool /*isolated*/, GBool /*knockout*/,
+				      GBool /*forSoftMask*/) {}
+  void endTransparencyGroup(GfxState * /*state*/) {}
+  void paintTransparencyGroup(GfxState * /*state*/, double * /*bbox*/) {}
   void setSoftMask(GfxState * /*state*/, double * /*bbox*/, GBool /*alpha*/,
-		   Function * /*transferFunc*/, GfxColor * /*backdropColor*/) override {}
-  void clearSoftMask(GfxState * /*state*/) override {}
+			   Function * /*transferFunc*/, GfxColor * /*backdropColor*/) {}
+  void clearSoftMask(GfxState * /*state*/) {}
+  void clearImages();
 
   //----- Image list
   // By default images are not rendred

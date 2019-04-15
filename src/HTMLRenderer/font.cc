@@ -102,7 +102,7 @@ bool HTMLRenderer::copyCachedFont(FontInfo & info, bool to_copy, std::string & o
     return font_in_cache;
 }
 
-string HTMLRenderer::dump_embedded_font (GfxFont * font, FontInfo & info)
+string HTMLRenderer::dump_embedded_font (GfxFont * font, FontInfo & info, bool & font_in_cache)
 {
     if(info.is_type3)
         return dump_type3_font(font, info);
@@ -111,6 +111,7 @@ string HTMLRenderer::dump_embedded_font (GfxFont * font, FontInfo & info)
     Object font_obj, font_obj2, fontdesc_obj;
     string suffix;
     string filepath;
+    font_in_cache = false;
 
     long long fn_id = info.id;
 
@@ -215,22 +216,49 @@ string HTMLRenderer::dump_embedded_font (GfxFont * font, FontInfo & info)
 
         obj.streamReset();
 
+        std::string full_font_name(info.name->getCString());
+        auto parts = split_string(full_font_name, '+');
+        parts = split_string(parts[parts.size()-1], '_');
+        
 
-        filepath = (char*)str_fmt("%s/%s%s", param.tmp_dir.c_str(), info.name->getCString(), suffix.c_str());
-        tmp_files.add(filepath);
+        auto font_name = parts[parts.size()-1];
+        fs::path path = param.fonts_dir;
 
-        ofstream outf(filepath, ofstream::binary);
-        if(!outf)
-            throw string("Cannot open file ") + filepath + " for writing";
+       for (auto & p : fs::directory_iterator(path)) {
+           if(p.path().stem() == font_name) {
+               font_in_cache = true;
+               path = p.path();
+           }
+       }
 
-        char buf[1024];
-        int len;
-        while((len = obj.streamGetChars(1024, (Guchar*)buf)) > 0)
-        {
-            outf.write(buf, len);
+        if(font_in_cache) {
+           cerr << "Using cached font: " << font_name << endl;
+
+           info.name->Set(font_name.c_str());
+           filepath = (char*)str_fmt("%s/%s%s", param.dest_dir.c_str(), info.name->getCString(), path.extension().c_str());
+           bool already_exists = fs::exists(filepath);
+           if(!already_exists) {
+               fs::copy_file(path, filepath);
+           }
+
+        } else {
+
+            filepath = (char*)str_fmt("%s/%s%s", param.tmp_dir.c_str(), info.name->getCString(), suffix.c_str());
+            tmp_files.add(filepath);
+
+            ofstream outf(filepath, ofstream::binary);
+            if(!outf)
+                throw string("Cannot open file ") + filepath + " for writing";
+
+            char buf[1024];
+            int len;
+            while((len = obj.streamGetChars(1024, (Guchar*)buf)) > 0)
+            {
+                outf.write(buf, len);
+            }
+            obj.streamClose();
+
         }
-        obj.streamClose();
-
     }
     catch(int) 
     {
@@ -995,7 +1023,7 @@ void HTMLRenderer::install_embedded_font(GfxFont * font, FontInfo & info)
     std::string path;
     bool font_in_cache = copyCachedFont(info, true, path);
     if(!font_in_cache) {
-        path = dump_embedded_font(font, info);
+        path = dump_embedded_font(font, info, font_in_cache);
     }
     string format = param.font_format;
     
