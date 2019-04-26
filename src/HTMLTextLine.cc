@@ -161,7 +161,7 @@ void HTMLTextLine::dump_text(ostream & out)
         out << "<div class=\"" << CSS::LINE_CN
             << " " << CSS::TRANSFORM_MATRIX_CN << all_manager.transform_matrix.install(line_state.transform_matrix)
             << " " << CSS::LEFT_CN             << all_manager.left.install(line_state.x - clip_x1)
-            << " " << CSS::HEIGHT_CN           << all_manager.height.install(height / line_state.transform_matrix[3])
+            << " " << CSS::HEIGHT_CN           << all_manager.height.install(height)
             << " " << CSS::TOP_CN           << all_manager.top.install(line_state.y - clip_y1 - ascent)
             << " " << CSS::LINE_HEIGHT_CN           << all_manager.line_height.install(line_height)
             ;
@@ -327,6 +327,7 @@ void HTMLTextLine::prepare(void)
     double accum_vertical_align = 0; // accumulated
     ascent = 0;
     descent = 0;
+    font_size = 0;
 
     // note that vertical_align cannot be calculated here
     for(auto iter = states.begin(); iter != states.end(); ++iter)
@@ -340,6 +341,7 @@ void HTMLTextLine::prepare(void)
         iter->ids[State::WORD_SPACE_ID]     = all_manager.word_space.install(iter->word_space);
         iter->hash();
 
+        font_size = max(font_size, iter->font_size);
         accum_vertical_align += iter->vertical_align;
         double cur_ascent = accum_vertical_align + font_info->ascent * iter->font_size;
         if(cur_ascent > ascent)
@@ -350,7 +352,7 @@ void HTMLTextLine::prepare(void)
 
     }
 
-    line_height = 1.25;
+    line_height = ascent/font_size;
     height = ascent;
 }
 
@@ -360,10 +362,9 @@ double HTMLTextLine::get_top_offset() {
 
 
 bool HTMLTextLine::optimize_lines(HTMLTextLine* second) {
-
-    double top = get_top_offset();
+    double top = get_top_offset() / line_state.transform_matrix[3];
     double left = line_state.x - clip_x1;
-    double fontSize = ascent;
+    double fontSize = font_size;//ascent-descent;
     //height = ascent;
     int f_lines_count = 1;
     for(int i=0; i < text.size(); i++) {
@@ -372,24 +373,29 @@ bool HTMLTextLine::optimize_lines(HTMLTextLine* second) {
 
    // height *= f_lines_count;
    // height += (f_lines_count - 1) * line_height;
+    //std::cout<<"ad "<<ascent<<" "<<descent<<std::endl;
     height = fontSize * line_height * (f_lines_count - 1) + fontSize;
 
-    double top2 = second->get_top_offset();
+    double top2 = second->get_top_offset() / line_state.transform_matrix[3];
     double left2 = second->line_state.x - second->clip_x1;
-    double fontSize2 = second->ascent;
+    double fontSize2 = second->font_size;//second->ascent-second->descent;
 
     int last_length = text.size() + 1;
 
-    if (abs(fontSize - fontSize2) < EPS && 
-        abs(left2 - left) < EPS && 
-        top2 - top >= 0 - EPS && 
-        top2 - top < height + fontSize2 + EPS) {    
+    if (abs(std::round(fontSize) - std::round(fontSize2)) < EPS && 
+        abs(std::round(left2) - std::round(left)) < EPS && 
+        std::round(top2) - std::round(top) >= 0 - EPS && 
+        std::round(top2) - std::round(top) < std::round(height) + std::round(fontSize2) + EPS) {    
+
+        //std::cout<<top<<" "<<top2<<" : "<<height<<" : "<<fontSize2<<std::endl;
+
         text.push_back('\n');
         f_lines_count++;
 
-        if(abs(line_height - 1.25) < EPS) {
-            line_height = (abs(top2 - top) - EPS) / fontSize;
+        if(f_lines_count == 2) {
+            line_height = abs(top2 - top) / fontSize;
         }
+        
         height = fontSize * line_height * (f_lines_count - 1) + fontSize;
 
         for(auto state_iter = second->states.begin(); state_iter != second->states.end(); state_iter++) {

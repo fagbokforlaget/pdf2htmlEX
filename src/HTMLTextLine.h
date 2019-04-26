@@ -121,6 +121,7 @@ private:
     double ascent, descent;
     double clip_x1, clip_y1;
     double width;
+    double font_size;
 
     double line_height;
 
