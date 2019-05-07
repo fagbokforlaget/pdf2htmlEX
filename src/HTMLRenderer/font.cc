@@ -620,7 +620,8 @@ void HTMLRenderer::embed_font(const string & filepath, GfxFont * font, FontInfo 
         else
         {
             // TODO: add an option to load the table?
-            ffw_cidflatten();
+            // TODO: fix EWP-1010
+            //ffw_cidflatten();
         }
     }
 
