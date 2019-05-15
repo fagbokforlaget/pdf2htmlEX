@@ -8,6 +8,7 @@
 
 #include <vector>
 #include <ostream>
+#include <algorithm>
 
 #include "Param.h"
 #include "StateManager.h"

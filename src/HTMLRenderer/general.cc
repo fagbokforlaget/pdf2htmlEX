@@ -134,11 +134,6 @@ void HTMLRenderer::process_page(PDFDoc *doc, int page_index, int page_number, in
             false, // printing
             nullptr, nullptr, nullptr, nullptr);
 
-
-    if (param.desired_dpi != param.actual_dpi) {
-        printf("Page %d DPI change %.1f => %.1f\n", page_index, param.desired_dpi, param.actual_dpi);
-    }
-
     if(param.split_pages)
     {
         delete f_curpage;
@@ -525,6 +520,7 @@ void HTMLRenderer::dump_css (void)
     all_manager.bottom          .dump_css(f_css.fs);
     all_manager.top             .dump_css(f_css.fs);
     all_manager.height          .dump_css(f_css.fs);
+    all_manager.line_height     .dump_css(f_css.fs);
     all_manager.width           .dump_css(f_css.fs);
     all_manager.left            .dump_css(f_css.fs);
     all_manager.bgimage_size    .dump_css(f_css.fs);
@@ -545,6 +541,7 @@ void HTMLRenderer::dump_css (void)
         all_manager.bottom          .dump_print_css(f_css.fs, ps);
         all_manager.top             .dump_print_css(f_css.fs, ps);
         all_manager.height          .dump_print_css(f_css.fs, ps);
+        all_manager.line_height     .dump_print_css(f_css.fs, ps);
         all_manager.width           .dump_print_css(f_css.fs, ps);
         all_manager.left            .dump_print_css(f_css.fs, ps);
         all_manager.bgimage_size    .dump_print_css(f_css.fs, ps);
