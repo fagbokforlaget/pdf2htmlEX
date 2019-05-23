@@ -380,7 +380,7 @@ void HTMLRenderer::check_state_change(GfxState * state)
                         double ymax = dy * old_draw_text_scale + cur_text_state.font_info->ascent * cur_text_state.font_size;
                         if((ymin <= oldymax + EPS) && (ymax >= oldymin - EPS))
                         {
-                            merged = true;
+                            //merged = true;
                         }
                     }
                 }
