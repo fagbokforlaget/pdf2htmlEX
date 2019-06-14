@@ -851,7 +851,7 @@ void HTMLRenderer::embed_font(const string & filepath, GfxFont * font, FontInfo 
      */
 
     // Reencode to Unicode Full such that FontForge won't ditch unicode values larger than 0xFFFF
-    ffw_reencode_unicode_full();
+    //ffw_reencode_unicode_full(); // POSSIBLY BREAK FONTS EWP-3030
 
     // Due to a bug of Fontforge about pfa -> woff conversion
     // we always generate TTF first, instead of the format specified by user
