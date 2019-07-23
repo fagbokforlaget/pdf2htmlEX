@@ -37,7 +37,7 @@ HTMLTextLine::HTMLTextLine (const HTMLLineState & line_state, const Param & para
 
 void HTMLTextLine::append_unicodes(const Unicode * u, int l, double width)
 {
-    if (l == 1) 
+    if (l == 1)
         text.push_back(min(u[0], (unsigned)INT_MAX));
     else if (l > 1)
     {
@@ -385,7 +385,9 @@ bool HTMLTextLine::optimize_lines(HTMLTextLine* second) {
     if (abs(std::round(fontSize) - std::round(fontSize2)) < EPS && 
         abs(std::round(left2) - std::round(left)) < EPS && 
         std::round(top2) - std::round(top) >= 0 - EPS && 
-        std::round(top2) - std::round(top) < std::round(height) + std::round(fontSize2) + EPS) {    
+        std::round(top2) - std::round(top) < std::round(height) + std::round(fontSize2) + EPS &&
+        text.size() > 1 &&
+        second->text.size() > 1) {    
 
         //std::cout<<top<<" "<<top2<<" : "<<height<<" : "<<fontSize2<<std::endl;
 
