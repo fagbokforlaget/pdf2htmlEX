@@ -302,8 +302,15 @@ class LineHeightManager : public StateManager<double, LineHeightManager>
 public:
     static const char * get_css_class_name (void) { return CSS::LINE_HEIGHT_CN; }
     double default_value(void) { return 0; }
-    void dump_value(std::ostream & out, double value) { out << "line-height:" << round(value); }
-    void dump_print_value(std::ostream & out, double value, double scale) { out << "line-height:" << round(value) ; }
+    void dump_value(std::ostream & out, double value) {
+        if(value <= 1.0 + EPS)
+            out << "line-height: inherit";
+        else
+            out << "line-height:" << round(value);
+    }
+    void dump_print_value(std::ostream & out, double value, double scale) {
+        dump_value(out, value);
+    }
 };
 
 class HeightManager : public StateManager<double, HeightManager>

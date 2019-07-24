@@ -160,11 +160,11 @@ void HTMLTextLine::dump_text(ostream & out)
         // open <div> for the current text line
         out << "<div class=\"" << CSS::LINE_CN
             << " " << CSS::TRANSFORM_MATRIX_CN << all_manager.transform_matrix.install(line_state.transform_matrix)
-            << " " << CSS::LEFT_CN             << all_manager.left.install(line_state.x - clip_x1)
-            << " " << CSS::HEIGHT_CN           << all_manager.height.install(height)
-            << " " << CSS::TOP_CN           << all_manager.top.install(line_state.y - clip_y1 - ascent * line_state.transform_matrix[0]) // DONT CHANGE FTW
-            << " " << CSS::LINE_HEIGHT_CN           << all_manager.line_height.install(line_height)
-            ;
+            << " " << CSS::LEFT_CN << all_manager.left.install(line_state.x - clip_x1)
+            << " " << CSS::HEIGHT_CN << all_manager.height.install(full_height)
+            << " " << CSS::TOP_CN << all_manager.top.install(
+                line_state.y - clip_y1 - ascent * line_state.transform_matrix[0] - (f_lines_count > 1 ? ((accum_vertical_align) / f_lines_count) : 0) * line_state.transform_matrix[0]) // DONT CHANGE FTW
+            << " " << CSS::LINE_HEIGHT_CN << all_manager.line_height.install(1.0 * full_height / f_lines_count / font_size);
         // it will be closed by the first state
     }
 
@@ -324,7 +324,7 @@ void HTMLTextLine::clip(const HTMLClipState & clip_state, double height)
 void HTMLTextLine::prepare(void)
 {
     // max_ascent determines the height of the div
-    double accum_vertical_align = 0; // accumulated
+    accum_vertical_align = 0; // accumulated
     ascent = 0;
     descent = 0;
     font_size = 0;
@@ -354,10 +354,11 @@ void HTMLTextLine::prepare(void)
 
     line_height = ascent/font_size;
     height = ascent;
+    full_height = font_size;
 }
 
 double HTMLTextLine::get_top_offset() {
-    return line_state.y - clip_y1 - ascent;
+    return line_state.y - clip_y1 - ascent * line_state.transform_matrix[0];
 }
 
 
@@ -366,7 +367,7 @@ bool HTMLTextLine::optimize_lines(HTMLTextLine* second) {
     double left = line_state.x - clip_x1;
     double fontSize = font_size;//ascent-descent;
     //height = ascent;
-    int f_lines_count = 1;
+    f_lines_count = 1;
     for(int i=0; i < text.size(); i++) {
         if(text[i] == '\n') f_lines_count++;
     }
@@ -374,7 +375,7 @@ bool HTMLTextLine::optimize_lines(HTMLTextLine* second) {
    // height *= f_lines_count;
    // height += (f_lines_count - 1) * line_height;
     //std::cout<<"ad "<<ascent<<" "<<descent<<std::endl;
-    height = fontSize * line_height * (f_lines_count - 1) + fontSize;
+    //height = fontSize * line_height * (f_lines_count - 1) + fontSize;
 
     double top2 = second->get_top_offset() / line_state.transform_matrix[3];
     double left2 = second->line_state.x - second->clip_x1;
@@ -394,11 +395,14 @@ bool HTMLTextLine::optimize_lines(HTMLTextLine* second) {
         text.push_back('\n');
         f_lines_count++;
 
+        accum_vertical_align += second->accum_vertical_align;
+
         if(f_lines_count == 2) {
             line_height = abs(top2 - top) / fontSize;
         }
-        
+
         height = fontSize * line_height * (f_lines_count - 1) + fontSize;
+        full_height = fontSize * line_height * f_lines_count;
 
         for(auto state_iter = second->states.begin(); state_iter != second->states.end(); state_iter++) {
             (*state_iter).start_idx += last_length;

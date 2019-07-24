@@ -126,6 +126,10 @@ private:
     double line_height;
 
     double height;
+    double full_height;
+
+    double accum_vertical_align = 0;
+    int f_lines_count = 1;
 
     HTMLLineState line_state;
 
