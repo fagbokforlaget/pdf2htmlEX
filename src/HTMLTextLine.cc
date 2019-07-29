@@ -163,7 +163,7 @@ void HTMLTextLine::dump_text(ostream & out)
             << " " << CSS::LEFT_CN << all_manager.left.install(line_state.x - clip_x1)
             << " " << CSS::HEIGHT_CN << all_manager.height.install(full_height)
             << " " << CSS::TOP_CN << all_manager.top.install(
-                line_state.y - clip_y1 - ascent * line_state.transform_matrix[0] - (f_lines_count > 1 ? ((accum_vertical_align) / f_lines_count) : 0) * line_state.transform_matrix[0]) // DONT CHANGE FTW
+                line_state.y - clip_y1 - ascent * line_state.transform_matrix[3] - (f_lines_count > 1 ? ((accum_vertical_align) / f_lines_count) : 0) * line_state.transform_matrix[0]) // DONT CHANGE FTW
             << " " << CSS::LINE_HEIGHT_CN << all_manager.line_height.install(1.0 * full_height / f_lines_count / font_size);
         // it will be closed by the first state
     }
